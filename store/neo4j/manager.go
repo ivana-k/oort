@@ -1,4 +1,4 @@
-package store
+package neo4j
 
 import (
 	"github.com/c12s/oort/config"
