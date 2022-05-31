@@ -42,8 +42,8 @@ func Run(config config.Config) {
 	//path := make([]model.Resource, 2)
 	//path[0] = c
 	//path[1] = ns1
-	//cf1 := model.NewResource()
-	//cf1.AddArg("id", "config/cf1")
+	cf1 := model.NewResource()
+	cf1.AddArg("id", "config/cf1")
 	//err := store.AddResourceToPath(cf1, path)
 	//if err != nil {
 	//	log.Fatal(err)
@@ -60,8 +60,28 @@ func Run(config config.Config) {
 	ipath[0] = u
 	rpath[0] = c
 	rpath[1] = ns1
-	err := store.AddPermission(ipath, rpath, model.NewPermission("namespace.list"))
+	//err := store.AddPermission(ipath, rpath, model.NewPermission("namespace.list"))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	permission, err := store.CheckPermission(ipath, rpath, model.NewPermission("namespace.list"))
 	if err != nil {
 		log.Fatal(err)
 	}
+	print(permission, "\n")
+	permission, err = store.CheckPermission(ipath, rpath, model.NewPermission("namespace.create"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	print(permission, "\n")
+
+	rpath2 := make([]model.Resource, 3)
+	rpath2[0] = c
+	rpath2[1] = ns1
+	rpath2[2] = cf1
+	permission, err = store.CheckPermission(ipath, rpath2, model.NewPermission("namespace.list"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	print(permission, "\n")
 }

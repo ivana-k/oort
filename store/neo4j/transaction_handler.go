@@ -17,15 +17,15 @@ func NewTransactionHandler(config config.Neo4j) *TransactionHandler {
 	}
 }
 
-func (h *TransactionHandler) Write(cypher string, params map[string]interface{}) (neo4j.Result, error) {
+func (h *TransactionHandler) Write(cypher string, params map[string]interface{}) ([]*neo4j.Record, error) {
 	return h.transaction(neo4j.AccessModeWrite, cypher, params)
 }
 
-func (h *TransactionHandler) Read(cypher string, params map[string]interface{}) (neo4j.Result, error) {
+func (h *TransactionHandler) Read(cypher string, params map[string]interface{}) ([]*neo4j.Record, error) {
 	return h.transaction(neo4j.AccessModeRead, cypher, params)
 }
 
-func (h *TransactionHandler) transaction(mode neo4j.AccessMode, cypher string, params map[string]interface{}) (neo4j.Result, error) {
+func (h *TransactionHandler) transaction(mode neo4j.AccessMode, cypher string, params map[string]interface{}) ([]*neo4j.Record, error) {
 	session, err := h.getSession(mode)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (h *TransactionHandler) transaction(mode neo4j.AccessMode, cypher string, p
 	if err != nil {
 		return nil, err
 	}
-	return result.(neo4j.Result), err
+	return result.([]*neo4j.Record), err
 }
 
 func (h *TransactionHandler) handleTransaction(cypher string, params map[string]interface{}) func(transaction neo4j.Transaction) (interface{}, error) {
@@ -46,7 +46,14 @@ func (h *TransactionHandler) handleTransaction(cypher string, params map[string]
 		if err != nil {
 			return nil, err
 		}
-		return result, nil
+		records := make([]*neo4j.Record, 0)
+		for result.Next() {
+			records = append(records, result.Record())
+		}
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+		return records, nil
 	}
 }
 

@@ -57,6 +57,29 @@ func (store *permissionStore) AddPermission(identityPath storemodel.Path, resour
 	return err
 }
 
+func (store *permissionStore) CheckPermission(identityPath storemodel.Path, resourcePath storemodel.Path, permission model.Permission) (bool, error) {
+	identityCypherPath, identityVar := identityPath.IdentityPath("i")
+	resourceCypherPath, resourceVar := resourcePath.Path("r")
+	cypher := fmt.Sprintf("MATCH %s MATCH %s "+
+		"MATCH ((%s)<-[:%s*0..]-(x1)-[p:%s{name:$name}]->(x2)-[:%s*0..]->(%s)) RETURN p UNION "+
+		"MATCH ((%s)<-[:%s*0..]-(x1)-[p:%s{name:$name}]->(%s)) RETURN p UNION "+
+		"MATCH ((%s)-[p:%s{name:$name}]->(x2)-[:%s*0..]->(%s)) RETURN p UNION "+
+		"MATCH ((%s)-[p:%s{name:$name}]->(%s)) RETURN p",
+		identityCypherPath, resourceCypherPath,
+		identityVar, identityPath.ParentRelationship(), identityPath.PermissionRelationship(), identityPath.ParentRelationship(), resourceVar,
+		identityVar, identityPath.ParentRelationship(), identityPath.PermissionRelationship(), resourceVar,
+		identityVar, identityPath.PermissionRelationship(), identityPath.ParentRelationship(), resourceVar,
+		identityVar, identityPath.PermissionRelationship(), resourceVar)
+	records, err := store.handler.Write(cypher, map[string]interface{}{"name": permission.GetName()})
+	if err != nil {
+		return false, err
+	}
+	if len(records) > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (store *permissionStore) addNode(resource storemodel.Resource, pattern string) error {
 	properties, params := resource.Properties("r")
 	cypher := fmt.Sprintf("CREATE %s SET %s", pattern, properties)
