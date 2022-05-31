@@ -30,11 +30,37 @@ func Run(config config.Config) {
 	//	log.Fatal(err)
 	//}
 
-	childPath := make([]model.Resource, 1)
-	childPath[0] = ns1
-	parentPath := make([]model.Resource, 1)
-	parentPath[0] = c
-	err := store.Connect(parentPath, childPath)
+	//childPath := make([]model.Resource, 1)
+	//childPath[0] = ns1
+	//parentPath := make([]model.Resource, 1)
+	//parentPath[0] = c
+	//err := store.Connect(parentPath, childPath)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	//path := make([]model.Resource, 2)
+	//path[0] = c
+	//path[1] = ns1
+	//cf1 := model.NewResource()
+	//cf1.AddArg("id", "config/cf1")
+	//err := store.AddResourceToPath(cf1, path)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	u := model.NewResource()
+	u.AddArg("id", "user/u1")
+	//err := store.AddIdentity(u)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	ipath := make([]model.Resource, 1)
+	rpath := make([]model.Resource, 2)
+	ipath[0] = u
+	rpath[0] = c
+	rpath[1] = ns1
+	err := store.AddPermission(ipath, rpath, model.NewPermission("namespace.list"))
 	if err != nil {
 		log.Fatal(err)
 	}

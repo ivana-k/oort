@@ -41,10 +41,19 @@ func (store *permissionStore) AddIdentityToPath(resource model.Resource, path st
 
 func (store *permissionStore) Connect(parentPath storemodel.Path, childPath storemodel.Path) error {
 	parentCypherPath, parentVar := parentPath.Path("p")
-	childCypherPath, childVar := childPath.ReversedPath("c")
+	childCypherPath, childVar := childPath.Path("c")
 	cypher := fmt.Sprintf("MATCH %s MATCH %s MERGE ((%s)-[:%s]->(%s))",
 		parentCypherPath, childCypherPath, parentVar, parentPath.ParentRelationship(), childVar)
 	_, err := store.handler.Write(cypher, nil)
+	return err
+}
+
+func (store *permissionStore) AddPermission(identityPath storemodel.Path, resourcePath storemodel.Path, permission model.Permission) error {
+	identityCypherPath, identityVar := identityPath.IdentityPath("i")
+	resourceCypherPath, resourceVar := resourcePath.Path("r")
+	cypher := fmt.Sprintf("MATCH %s MATCH %s MERGE ((%s)-[:%s{name:$name}]->(%s))",
+		identityCypherPath, resourceCypherPath, identityVar, identityPath.PermissionRelationship(), resourceVar)
+	_, err := store.handler.Write(cypher, map[string]interface{}{"name": permission.GetName()})
 	return err
 }
 

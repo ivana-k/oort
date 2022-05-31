@@ -11,4 +11,5 @@ type PermissionStore interface {
 	AddResourceToPath(resource model.Resource, path storemodel.Path) error
 	AddIdentityToPath(resource model.Resource, path storemodel.Path) error
 	Connect(parentPath storemodel.Path, childPath storemodel.Path) error
+	AddPermission(identityPath storemodel.Path, resourcePath storemodel.Path, permission model.Permission) error
 }

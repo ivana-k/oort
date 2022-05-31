@@ -9,7 +9,8 @@ import (
 type Path []model.Resource
 
 func (path Path) Path(resourceVar string) (pattern string, lastResourceVar string) {
-	lastResourceVar = fmt.Sprintf("%s%d", resourceVar, len(path)-1)
+	last := len(path) - 1
+	lastResourceVar = fmt.Sprintf("%s%d", resourceVar, last)
 	for i, resource := range path {
 		pattern += fmt.Sprintf("(%s%d: %s{ ", resourceVar, i, resourceLabel)
 		for key, value := range resource.GetArgs() {
@@ -17,31 +18,57 @@ func (path Path) Path(resourceVar string) (pattern string, lastResourceVar strin
 		}
 		pattern = pattern[:len(pattern)-1]
 		pattern += "})"
-		if i != len(path)-1 {
+		if i != last {
 			pattern += fmt.Sprintf("-[:%s]->", parentRelationship)
 		}
 	}
 	return
 }
 
-func (path Path) ReversedPath(resourceVar string) (pattern string, lastResourceVar string) {
-	lastResourceVar = fmt.Sprintf("%s%d", resourceVar, 0)
-	for i, resource := range reverse(path) {
-		pattern += fmt.Sprintf("(%s%d: %s{ ", resourceVar, i, resourceLabel)
+func (path Path) IdentityPath(resourceVar string) (pattern string, lastResourceVar string) {
+	last := len(path) - 1
+	lastResourceVar = fmt.Sprintf("%s%d", resourceVar, last)
+	for i, resource := range path {
+		if i != last {
+			pattern += fmt.Sprintf("(%s%d: %s{ ", resourceVar, i, resourceLabel)
+		} else {
+			pattern += fmt.Sprintf("(%s%d:%s:%s{ ", resourceVar, i, resourceLabel, identityLabel)
+		}
 		for key, value := range resource.GetArgs() {
 			pattern += fmt.Sprintf("%s: %s,", key, getValue(value))
 		}
 		pattern = pattern[:len(pattern)-1]
 		pattern += "})"
-		if i != len(path)-1 {
-			pattern += fmt.Sprintf("<-[:%s]-", parentRelationship)
+		if i != last {
+			pattern += fmt.Sprintf("-[:%s]->", parentRelationship)
 		}
 	}
 	return
 }
 
+//func (path Path) ReversedPath(resourceVar string) (pattern string, lastResourceVar string) {
+//	last := len(path) - 1
+//	lastResourceVar = fmt.Sprintf("%s%d", resourceVar, 0)
+//	for i, resource := range reverse(path) {
+//		pattern += fmt.Sprintf("(%s%d: %s{ ", resourceVar, i, resourceLabel)
+//		for key, value := range resource.GetArgs() {
+//			pattern += fmt.Sprintf("%s: %s,", key, getValue(value))
+//		}
+//		pattern = pattern[:len(pattern)-1]
+//		pattern += "})"
+//		if i != last {
+//			pattern += fmt.Sprintf("<-[:%s]-", parentRelationship)
+//		}
+//	}
+//	return
+//}
+
 func (path Path) ParentRelationship() string {
 	return parentRelationship
+}
+
+func (path Path) PermissionRelationship() string {
+	return permissionRelationship
 }
 
 func getValue(value interface{}) string {
