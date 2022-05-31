@@ -1,24 +1,65 @@
 package neo4j
 
 import (
+	"fmt"
+	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/store"
-)
-
-const (
-	resourceVar        = "r"
-	resourceLabel      = "Resource"
-	identityLabel      = "Identity"
-	parentRelationship = "PARENT"
+	storemodel "github.com/c12s/oort/store/neo4j/model"
 )
 
 //TODO: error handling
 
 type permissionStore struct {
-	manager *Manager
+	handler *TransactionHandler
 }
 
-func NewNeo4jPermissionStore(manager *Manager) store.PermissionStore {
+func NewNeo4jPermissionStore(handler *TransactionHandler) store.PermissionStore {
 	return &permissionStore{
-		manager: manager,
+		handler: handler,
 	}
+}
+
+func (store *permissionStore) AddResource(resource model.Resource) error {
+	r := storemodel.Resource{Resource: resource}
+	return store.addNode(r, r.ResourcePattern("r"))
+}
+
+func (store *permissionStore) AddIdentity(resource model.Resource) error {
+	r := storemodel.Resource{Resource: resource}
+	return store.addNode(r, r.IdentityPattern("r"))
+}
+
+func (store *permissionStore) AddResourceToPath(resource model.Resource, path storemodel.Path) error {
+	r := storemodel.Resource{Resource: resource}
+	return store.addNodeToPath(r, path, r.ResourcePattern("r"))
+}
+
+func (store *permissionStore) AddIdentityToPath(resource model.Resource, path storemodel.Path) error {
+	r := storemodel.Resource{Resource: resource}
+	return store.addNodeToPath(r, path, r.IdentityPattern("r"))
+}
+
+func (store *permissionStore) Connect(parentPath storemodel.Path, childPath storemodel.Path) error {
+	parentCypherPath, parentVar := parentPath.Path("p")
+	childCypherPath, childVar := childPath.ReversedPath("c")
+	cypher := fmt.Sprintf("MATCH %s MATCH %s MERGE ((%s)-[:%s]->(%s))",
+		parentCypherPath, childCypherPath, parentVar, parentPath.ParentRelationship(), childVar)
+	_, err := store.handler.Write(cypher, nil)
+	return err
+}
+
+func (store *permissionStore) addNode(resource storemodel.Resource, pattern string) error {
+	properties, params := resource.Properties("r")
+	cypher := fmt.Sprintf("CREATE %s SET %s", pattern, properties)
+	_, err := store.handler.Write(cypher, params)
+	return err
+}
+
+func (store *permissionStore) addNodeToPath(resource storemodel.Resource, path storemodel.Path, pattern string) error {
+	properties, params := resource.Properties("r")
+	cypherPath, lastResourceVar := path.Path("r")
+	cypher := fmt.Sprintf("MATCH p=(%s) MERGE ((%s)-[:%s]->%s) SET %s",
+		cypherPath, lastResourceVar, path.ParentRelationship(), pattern, properties)
+	_, err := store.handler.Write(cypher, params)
+	return err
 }
