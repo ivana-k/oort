@@ -1,19 +1,18 @@
 package model
 
-type Permission interface {
-	GetName() string
+type PermissionKind int
+
+const (
+	Allow PermissionKind = iota
+	Deny
+)
+
+type Permission struct {
+	name      string
+	kind      PermissionKind
+	condition Condition
 }
 
-type permission struct {
-	name string
-}
-
-func NewPermission(name string) Permission {
-	return &permission{
-		name: name,
-	}
-}
-
-func (p *permission) GetName() string {
-	return p.name
+type Condition struct {
+	expression string
 }

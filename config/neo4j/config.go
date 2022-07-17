@@ -1,22 +1,21 @@
-package config
+package neo4j
 
-type Neo4j interface {
+type Config interface {
 	Uri() string
 	Username() string
 	Password() string
 	DbName() string
 }
 
-type neo4j struct {
+type config struct {
 	uri      string
 	username string
 	password string
 	dbName   string
 }
 
-//TODO: ovo je za prvu pomoc, izmeni posle
-func NewDefaultNeo4jConfig() Neo4j {
-	return neo4j{
+func NewDefaultNeo4jConfig() Config {
+	return config{
 		uri:      "bolt://localhost:7687",
 		username: "neo4j",
 		password: "t",
@@ -24,18 +23,18 @@ func NewDefaultNeo4jConfig() Neo4j {
 	}
 }
 
-func (c neo4j) Uri() string {
+func (c config) Uri() string {
 	return c.uri
 }
 
-func (c neo4j) Username() string {
+func (c config) Username() string {
 	return c.username
 }
 
-func (c neo4j) Password() string {
+func (c config) Password() string {
 	return c.password
 }
 
-func (c neo4j) DbName() string {
+func (c config) DbName() string {
 	return c.dbName
 }

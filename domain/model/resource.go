@@ -1,38 +1,84 @@
 package model
 
-import (
-	"errors"
-	"fmt"
+type AttributeKind int
+
+const (
+	Int64 AttributeKind = iota
+	Float64
+	String
+	Bool
 )
 
-type Resource interface {
-	AddArg(key string, value interface{})
-	GetArgs() map[string]interface{}
-	GetArg(key string) (interface{}, error)
-}
+type ConnectionKind int
 
-type resource struct {
-	args map[string]interface{}
-}
-
-func NewResource() Resource {
-	return &resource{
-		args: map[string]interface{}{},
+func (connKind ConnectionKind) String() string {
+	switch connKind {
+	case Inherits:
+		return "Inherits"
+	default:
+		return "Includes"
 	}
 }
 
-func (r *resource) AddArg(key string, value interface{}) {
-	r.args[key] = value
+const (
+	Inherits ConnectionKind = iota
+	Includes
+)
+
+type AttributeId struct {
+	name string
+	kind AttributeKind
 }
 
-func (r *resource) GetArgs() map[string]interface{} {
-	return r.args
+type Attribute struct {
+	id    AttributeId
+	value []byte
 }
 
-func (r *resource) GetArg(key string) (interface{}, error) {
-	value, ok := r.args[key]
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("no arg with key %s", key))
+func NewAttribute(name string, kind AttributeKind, value []byte) Attribute {
+	return Attribute{
+		id: AttributeId{
+			name: name,
+			kind: kind,
+		},
+		value: value,
 	}
-	return value, nil
+}
+
+func (attr Attribute) Name() string {
+	return attr.id.name
+}
+
+func (attr Attribute) Kind() AttributeKind {
+	return attr.id.kind
+}
+
+func (attr Attribute) Value() []byte {
+	return attr.value
+}
+
+type ResourceId struct {
+	id   string
+	kind string
+}
+
+type Resource struct {
+	id ResourceId
+}
+
+func NewResource(id, kind string) Resource {
+	return Resource{
+		id: ResourceId{
+			id:   id,
+			kind: kind,
+		},
+	}
+}
+
+func (r Resource) Id() string {
+	return r.id.id
+}
+
+func (r Resource) Kind() string {
+	return r.id.kind
 }
