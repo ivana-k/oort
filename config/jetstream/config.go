@@ -1,4 +1,4 @@
-package kafka
+package jetstream
 
 type Config interface {
 }
@@ -7,6 +7,6 @@ type config struct {
 }
 
 //TODO: ovo je za prvu pomoc, izmeni posle
-func NewKafkaConfig() Config {
+func NewDefaultJetStreamConfig() Config {
 	return config{}
 }

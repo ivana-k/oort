@@ -2,6 +2,8 @@ package neo4j
 
 import (
 	"github.com/c12s/oort/domain/model"
+	checker2 "github.com/c12s/oort/domain/model/checker"
+	syncer2 "github.com/c12s/oort/domain/model/syncer"
 	"github.com/c12s/oort/domain/store"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
@@ -16,99 +18,143 @@ func NewAclStore(manager *TransactionManager) store.AclStore {
 	}
 }
 
-func (store AclStore) ConnectResources(parent, child model.Resource) error {
+func (store AclStore) ConnectResources(req syncer2.ConnectResourcesReq) syncer2.ConnectResourcesResp {
 	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(
-			"MERGE (parent:Resource{id: $parentId, kind: $parentKind}) "+
-				"MERGE (child:Resource{id: $childId, kind: $childKind}) "+
-				"MERGE (parent)-[:Includes]->(child)",
-			map[string]interface{}{"parentId": parent.Id(), "parentKind": parent.Kind(),
-				"childId": child.Id(), "childKind": child.Kind()})
+		result, err := transaction.Run(connectResourcesCypher(req))
 		if err != nil {
 			return nil, err
 		}
 
 		return nil, result.Err()
 	})
-	return err
+	return syncer2.ConnectResourcesResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
 }
 
-func (store AclStore) DisconnectResources(parent, child model.Resource) error {
+func (store AclStore) DisconnectResources(req syncer2.DisconnectResourcesReq) syncer2.DisconnectResourcesResp {
 	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(
-			"MATCH (parent:Resource{id: $parentId, kind: $parentKind}) "+
-				"MATCH (child:Resource{id: $childId, kind: $childKind}) "+
-				"MATCH (parent)-[conn:Includes]->(child)"+
-				"DELETE conn "+
-				"WITH child "+
-				"CALL apoc.path.spanningTree(child, {relationshipFilter: \"Includes>\"}) YIELD path "+
-				"WITH child, nodes(path) AS descendants "+
-				"MATCH (descendant) WHERE descendant IN descendants "+
-				"MATCH (ancestor)-[:Includes*]->(descendant) "+
-				"WITH child, descendant, descendants, collect(distinct ancestor) AS ancestors "+
-				"WHERE all(ancestor IN ancestors WHERE ancestor IN descendants OR ancestor = child) "+
-				"DETACH DELETE descendant "+
-				"WITH child "+
-				"OPTIONAL MATCH (ancestor)-[:Includes*]->(child) "+
-				"WITH child, collect(ancestor) AS ancestors "+
-				"WHERE SIZE(ancestors) = 0 "+
-				"DELETE child",
-			map[string]interface{}{"parentId": parent.Id(), "parentKind": parent.Kind(),
-				"childId": child.Id(), "childKind": child.Kind()})
+		result, err := transaction.Run(disconnectResourcesCypher(req))
 		if err != nil {
 			return nil, err
 		}
 
 		return nil, result.Err()
 	})
-	return err
+	return syncer2.DisconnectResourcesResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
 }
 
-func (store AclStore) UpsertAttribute(resource model.Resource, attribute model.Attribute) error {
+func (store AclStore) UpsertAttribute(req syncer2.UpsertAttributeReq) syncer2.UpsertAttributeResp {
 	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(
-			"MATCH (resource:Resource{id: $id, kind: $kind}) "+
-				"MERGE (attribute:Attribute{name: $attrName, kind: $attrKind})"+
-				"<-[:Includes]-(resource) "+
-				"SET attribute.value = $attrValue",
-			map[string]interface{}{"id": resource.Id(), "kind": resource.Kind(),
-				"attrName": attribute.Name(), "attrKind": attribute.Kind(),
-				"attrValue": attribute.Value()})
+		result, err := transaction.Run(upsertAttributeCypher(req))
 		if err != nil {
 			return nil, err
 		}
 
 		return nil, result.Err()
 	})
-	return err
+	return syncer2.UpsertAttributeResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
 }
 
-func (store AclStore) RemoveAttribute(resource model.Resource, attribute model.Attribute) error {
+func (store AclStore) RemoveAttribute(req syncer2.RemoveAttributeReq) syncer2.RemoveAttributeResp {
 	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(
-			"MATCH (:Resource{id: $id, kind: $kind})"+
-				"-[:Includes]->"+
-				"(attribute:Attribute{name: $attrName, kind: $attrKind})"+
-				"DETACH DELETE attribute",
-			map[string]interface{}{"id": resource.Id(), "kind": resource.Kind(),
-				"attrName": attribute.Name(), "attrKind": attribute.Kind()})
+		result, err := transaction.Run(removeAttributeCypher(req))
 		if err != nil {
 			return nil, err
 		}
 
 		return nil, result.Err()
 	})
-	return err
+	return syncer2.RemoveAttributeResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
 }
 
-func (store AclStore) InsertPermission(principal, resource model.Resource, permission model.Permission) error {
-	return nil
+func (store AclStore) GetAttributes(req checker2.GetAttributeReq) checker2.GetAttributeResp {
+	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(getAttributeCypher(req))
+		if err != nil {
+			return nil, err
+		}
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+
+		records := make([]interface{}, 0)
+		for result.Next() {
+			records = append(records, result.Record().Values[0])
+		}
+		return records, nil
+	})
+
+	if err != nil {
+		return checker2.GetAttributeResp{Attributes: nil, Error: err}
+	}
+	return checker2.GetAttributeResp{Attributes: getAttributes(results), Error: nil}
 }
 
-func (store AclStore) RemovePermission(principal, resource model.Resource, permission model.Permission) error {
-	return nil
+func (store AclStore) InsertPermission(req syncer2.InsertPermissionReq) syncer2.InsertPermissionResp {
+	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(insertPermissionCypher(req))
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, result.Err()
+	})
+	return syncer2.InsertPermissionResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
 }
 
-func (store AclStore) CheckPermission(principal, resource model.Resource, permissionName string) error {
-	return nil
+func (store AclStore) RemovePermission(req syncer2.RemovePermissionReq) syncer2.RemovePermissionResp {
+	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(removePermissionCypher(req))
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, result.Err()
+	})
+	return syncer2.RemovePermissionResp{
+		Resp: syncer2.SyncResp{Error: err},
+	}
+}
+
+func (store AclStore) GetPermissionByPrecedence(req checker2.GetPermissionReq) checker2.GetPermissionByPrecedenceResp {
+	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(getPermissionAndDistanceToPrincipal(req))
+		if err != nil {
+			return nil, err
+		}
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+
+		records := make([]interface{}, 0)
+		for result.Next() {
+			records = append(records, result.Record().Values)
+		}
+		return records, nil
+	})
+
+	if err != nil {
+		return checker2.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
+	}
+
+	distMap := make(map[int]model.PermissionList)
+	for _, result := range results.([]interface{}) {
+		distance := int(result.([]interface{})[1].(int64))
+		_, ok := distMap[distance]
+		if !ok {
+			distMap[distance] = make([]model.Permission, 0)
+		}
+		distMap[distance] = append(distMap[distance], getPermission(result.([]interface{})[0]))
+	}
+
+	return checker2.GetPermissionByPrecedenceResp{Hierarchy: sortByDistanceAsc(distMap), Error: nil}
 }

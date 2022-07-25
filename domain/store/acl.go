@@ -1,13 +1,17 @@
 package store
 
-import "github.com/c12s/oort/domain/model"
+import (
+	checker2 "github.com/c12s/oort/domain/model/checker"
+	syncer2 "github.com/c12s/oort/domain/model/syncer"
+)
 
 type AclStore interface {
-	ConnectResources(parent, child model.Resource) error
-	DisconnectResources(parent, child model.Resource) error
-	UpsertAttribute(resource model.Resource, attribute model.Attribute) error
-	RemoveAttribute(resource model.Resource, attribute model.Attribute) error
-	InsertPermission(principal, resource model.Resource, permission model.Permission) error
-	RemovePermission(principal, resource model.Resource, permission model.Permission) error
-	CheckPermission(principal, resource model.Resource, permissionName string) error
+	ConnectResources(req syncer2.ConnectResourcesReq) syncer2.ConnectResourcesResp
+	DisconnectResources(req syncer2.DisconnectResourcesReq) syncer2.DisconnectResourcesResp
+	UpsertAttribute(req syncer2.UpsertAttributeReq) syncer2.UpsertAttributeResp
+	RemoveAttribute(req syncer2.RemoveAttributeReq) syncer2.RemoveAttributeResp
+	GetAttributes(req checker2.GetAttributeReq) checker2.GetAttributeResp
+	InsertPermission(req syncer2.InsertPermissionReq) syncer2.InsertPermissionResp
+	RemovePermission(req syncer2.RemovePermissionReq) syncer2.RemovePermissionResp
+	GetPermissionByPrecedence(req checker2.GetPermissionReq) checker2.GetPermissionByPrecedenceResp
 }

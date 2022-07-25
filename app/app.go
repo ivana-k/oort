@@ -1,10 +1,18 @@
 package app
 
 import (
+	"fmt"
+	checkergrpc "github.com/c12s/oort/api/checker/grpc"
+	syncergrpc "github.com/c12s/oort/api/syncer/grpc"
 	"github.com/c12s/oort/config"
-	"github.com/c12s/oort/domain/model"
+	"github.com/c12s/oort/domain/handler"
+	"github.com/c12s/oort/proto/checkerpb"
+	"github.com/c12s/oort/proto/syncerpb"
 	"github.com/c12s/oort/store/acl/neo4j"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
+	"net"
 )
 
 func Run(config config.Config) {
@@ -16,27 +24,29 @@ func Run(config config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	store := neo4j.NewAclStore(manager)
-	parent := model.NewResource("abcd", "cluster")
-	child := model.NewResource("efgh", "namespace")
-	gchild := model.NewResource("aaa", "secrets")
+	aclStore := neo4j.NewAclStore(manager)
 
-	err = store.ConnectResources(parent, child)
+	checkerHandler := handler.NewCheckerHandler(aclStore)
+	syncerHandler := handler.NewSyncerHandler(aclStore)
+
+	checkerGrpcApi := checkergrpc.NewCheckerGrpcApi(checkerHandler)
+	syncerGrpcApi := syncergrpc.NewSyncerGrpcApi(syncerHandler)
+
+	startGrpcServer(config.Server().Host(), config.Server().Port(),
+		checkerGrpcApi, syncerGrpcApi)
+}
+
+func startGrpcServer(host, port string, checkerGrpcApi checkergrpc.CheckerGrpcApi, syncerGrpcApi syncergrpc.SyncerGrpcApi) {
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", host, port))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-	err = store.ConnectResources(child, gchild)
-	attr := model.NewAttribute("owner", model.String, []byte("pera"))
-	err = store.UpsertAttribute(gchild, attr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//err = store.RemoveAttribute(parent, attr)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	err = store.DisconnectResources(child, gchild)
-	if err != nil {
-		log.Fatal(err)
+	s := grpc.NewServer()
+	syncerpb.RegisterSyncerServiceServer(s, syncerGrpcApi)
+	checkerpb.RegisterCheckerServiceServer(s, checkerGrpcApi)
+	reflection.Register(s)
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
 }

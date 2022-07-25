@@ -1,1 +1,1 @@
-package kafka
+package jetstream
