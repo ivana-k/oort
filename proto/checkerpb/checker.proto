@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "github.com/c12s/oort/proto/checkerpb";
+
+package checkerpb;
+
+import "common.proto";
+
+service CheckerService {
+  rpc CheckPermission(CheckPermissionReq) returns (CheckResp) {}
+}
+
+message CheckPermissionReq {
+  common.Resource principal = 1;
+  common.Resource resource = 2;
+  string permissionName = 3;
+}
+
+message CheckResp {
+  bool allowed = 1;
+}

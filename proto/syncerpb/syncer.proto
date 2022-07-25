@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+option go_package = "github.com/c12s/oort/proto/syncerpb";
+
+package syncerpb;
+
+import "common.proto";
+
+service SyncerService {
+  rpc ConnectResources(ConnectResourcesReq) returns (SyncResp) {}
+  rpc DisconnectResources(DisconnectResourcesReq) returns (SyncResp) {}
+  rpc UpsertAttribute(UpsertAttributeReq) returns (SyncResp) {}
+  rpc RemoveAttribute(RemoveAttributeReq) returns (SyncResp) {}
+  rpc InsertPermission(InsertPermissionReq) returns (SyncResp) {}
+  rpc RemovePermission(RemovePermissionReq) returns (SyncResp) {}
+}
+
+message ConnectResourcesReq {
+  common.Resource parent = 1;
+  common.Resource child = 2;
+}
+
+message DisconnectResourcesReq {
+  common.Resource parent = 1;
+  common.Resource child = 2;
+}
+
+message UpsertAttributeReq {
+  common.Resource resource = 1;
+  common.Attribute attribute = 2;
+}
+
+message RemoveAttributeReq {
+  common.Resource resource = 1;
+  common.AttributeId attributeId = 2;
+}
+
+message InsertPermissionReq {
+  common.Resource principal = 1;
+  common.Resource resource = 2;
+  common.Permission permission = 3;
+}
+
+message RemovePermissionReq {
+  common.Resource principal = 1;
+  common.Resource resource = 2;
+  common.Permission permission = 3;
+}
+
+message SyncReq {
+  string id = 1;
+  enum SyncKind {
+    CONNECT_RESOURCES = 0;
+    DISCONNECT_RESOURCES = 1;
+    UPSERT_ATTRIBUTE = 2;
+    REMOVE_ATTRIBUTE = 3;
+    INSERT_PERMISSION = 4;
+    REMOVE_PERMISSION = 5;
+  }
+  SyncKind kind = 2;
+  bytes payload = 3;
+}
+
+message SyncResp {
+}
+
+message AsyncSyncResp {
+  string reqId = 1;
+  bool successful = 2;
+  string error = 3;
+}
