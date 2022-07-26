@@ -1,8 +1,6 @@
 package async
 
-import "github.com/nats-io/nats.go"
-
 type Subscriber interface {
-	Subscribe(handler func(*nats.Msg)) error
+	Subscribe(subject, queueGroup string, handler func([]byte) error) error
 	Unsubscribe() error
 }
