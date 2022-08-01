@@ -39,18 +39,26 @@ func (x *RemoveAttributeReq) MapToDomain() (syncer.Request, error) {
 }
 
 func (x *InsertPermissionReq) MapToDomain() (syncer.Request, error) {
+	permission, err := x.Permission.MapToDomain()
+	if err != nil {
+		return nil, err
+	}
 	return syncer.InsertPermissionReq{
 		Principal:  x.Principal.MapToDomain(),
 		Resource:   x.Resource.MapToDomain(),
-		Permission: x.Permission.MapToDomain(),
+		Permission: permission,
 	}, nil
 }
 
 func (x *RemovePermissionReq) MapToDomain() (syncer.Request, error) {
+	permission, err := x.Permission.MapToDomain()
+	if err != nil {
+		return nil, err
+	}
 	return syncer.RemovePermissionReq{
 		Principal:  x.Principal.MapToDomain(),
 		Resource:   x.Resource.MapToDomain(),
-		Permission: x.Permission.MapToDomain(),
+		Permission: permission,
 	}, nil
 }
 

@@ -153,7 +153,11 @@ func (store AclStore) GetPermissionByPrecedence(req checker.GetPermissionReq) ch
 		if !ok {
 			distMap[distance] = make([]model.Permission, 0)
 		}
-		distMap[distance] = append(distMap[distance], getPermission(result.([]interface{})[0]))
+		permission, err := getPermission(result.([]interface{})[0])
+		if err != nil {
+			return checker.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
+		}
+		distMap[distance] = append(distMap[distance], permission)
 	}
 
 	return checker.GetPermissionByPrecedenceResp{Hierarchy: sortByDistanceAsc(distMap), Error: nil}

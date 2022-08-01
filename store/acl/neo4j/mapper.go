@@ -22,13 +22,16 @@ func getAttributes(cypherResults interface{}) []model.Attribute {
 	return attributes
 }
 
-func getPermission(cypherResult interface{}) model.Permission {
+func getPermission(cypherResult interface{}) (model.Permission, error) {
 	permMap := cypherResult.(map[string]interface{})
+	condition, err := model.NewCondition(permMap["condition"].(string))
+	if err != nil {
+		return model.Permission{}, err
+	}
 	return model.NewPermission(
 		permMap["name"].(string),
 		model.PermissionKind(permMap["kind"].(int64)),
-		model.NewCondition(
-			permMap["condition"].(string)))
+		*condition), nil
 }
 
 func sortByDistanceAsc(m map[int]model.PermissionList) model.PermissionHierarchy {
