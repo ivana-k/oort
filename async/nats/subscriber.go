@@ -1,4 +1,4 @@
-package jetstream
+package nats
 
 import (
 	"errors"
@@ -15,6 +15,13 @@ type Subscriber struct {
 
 func NewSubscriber(conn *nats.Conn) (async.Subscriber, error) {
 	js, err := conn.JetStream()
+	if err != nil {
+		return nil, err
+	}
+	_, err = js.AddStream(&nats.StreamConfig{
+		Name:     "SYNC",
+		Subjects: []string{"sync"},
+	})
 	if err != nil {
 		return nil, err
 	}

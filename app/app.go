@@ -3,7 +3,9 @@ package app
 import (
 	"fmt"
 	checkergrpc "github.com/c12s/oort/api/checker/grpc"
+	syncerasync "github.com/c12s/oort/api/syncer/async"
 	syncergrpc "github.com/c12s/oort/api/syncer/grpc"
+	"github.com/c12s/oort/async/nats"
 	"github.com/c12s/oort/config"
 	"github.com/c12s/oort/domain/handler"
 	"github.com/c12s/oort/proto/checkerpb"
@@ -18,8 +20,6 @@ import (
 func Run(config config.Config) {
 	manager, err := neo4j.NewTransactionManager(
 		config.Neo4j().Uri(),
-		config.Neo4j().Username(),
-		config.Neo4j().Password(),
 		config.Neo4j().DbName())
 	if err != nil {
 		log.Fatal(err)
@@ -32,12 +32,25 @@ func Run(config config.Config) {
 	checkerGrpcApi := checkergrpc.NewCheckerGrpcApi(checkerHandler)
 	syncerGrpcApi := syncergrpc.NewSyncerGrpcApi(syncerHandler)
 
-	startGrpcServer(config.Server().Host(), config.Server().Port(),
+	natsConn, err := nats.NewConnection(config.Nats().Uri())
+	if err != nil {
+		panic(err)
+	}
+	subscriber, err := nats.NewSubscriber(natsConn)
+	if err != nil {
+		panic(err)
+	}
+	err = syncerasync.NewSyncerAsyncApi(subscriber, "sync", "oort", syncerpb.NewSyncMessageProtoSerializer(), syncerHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	startGrpcServer(config.Server().Port(),
 		checkerGrpcApi, syncerGrpcApi)
 }
 
-func startGrpcServer(host, port string, checkerGrpcApi checkergrpc.CheckerGrpcApi, syncerGrpcApi syncergrpc.SyncerGrpcApi) {
-	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", host, port))
+func startGrpcServer(port string, checkerGrpcApi checkergrpc.CheckerGrpcApi, syncerGrpcApi syncergrpc.SyncerGrpcApi) {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

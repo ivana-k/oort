@@ -10,8 +10,8 @@ type TransactionManager struct {
 	dbName string
 }
 
-func NewTransactionManager(uri, username, password, dbName string) (*TransactionManager, error) {
-	driver, err := neo4j.NewDriver(uri, neo4j.BasicAuth(username, password, ""))
+func NewTransactionManager(uri, dbName string) (*TransactionManager, error) {
+	driver, err := neo4j.NewDriver(uri, neo4j.NoAuth())
 	if err != nil {
 		return nil, err
 	}

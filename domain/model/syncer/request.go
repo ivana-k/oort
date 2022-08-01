@@ -2,6 +2,8 @@ package syncer
 
 import "github.com/c12s/oort/domain/model"
 
+type Request interface{}
+
 type ConnectResourcesReq struct {
 	Parent,
 	Child model.Resource

@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+
+  oort:
+    build: .
+    image: oort
+    container_name: oort
+    hostname: ${OORT_HOSTNAME}
+    expose:
+      - ${OORT_PORT}
+    ports:
+      - ${OORT_PORT}:${OORT_PORT}
+    environment:
+      - OORT_PORT=${OORT_PORT}
+      - NEO4J_HOSTNAME=${NEO4J_HOSTNAME}
+      - NEO4J_BOLT_PORT=${NEO4J_BOLT_PORT}
+      - NEO4J_DBNAME=${NEO4J_DBNAME}
+      - NATS_HOSTNAME=${NATS_HOSTNAME}
+      - NATS_PORT=${NATS_PORT}
+      - NATS_USERNAME=${NATS_USERNAME}
+      - NATS_PASSWORD=${NATS_PASSWORD}
+    networks:
+      - network
+    depends_on:
+      - neo4j
+      - nats
+
+  poller:
+    build: ./poller/
+    image: poller
+    container_name: poller
+    hostname: poller
+    restart: on-failure
+    environment:
+      - NEO4J_HOSTNAME=${NEO4J_HOSTNAME}
+      - NEO4J_BOLT_PORT=${NEO4J_BOLT_PORT}
+      - NEO4J_DBNAME=${NEO4J_DBNAME}
+      - NATS_HOSTNAME=${NATS_HOSTNAME}
+      - NATS_PORT=${NATS_PORT}
+      - NATS_USERNAME=${NATS_USERNAME}
+      - NATS_PASSWORD=${NATS_PASSWORD}
+    depends_on:
+        - neo4j
+        - nats
+    networks:
+        - network
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    hostname: ${NEO4J_HOSTNAME}
+    restart: on-failure
+    expose:
+      - ${NEO4J_HTTP_PORT}
+      - ${NEO4J_BOLT_PORT}
+    ports:
+      - ${NEO4J_HTTP_PORT}:${NEO4J_HTTP_PORT}
+      - ${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}
+    environment:
+      - NEO4J_apoc_export_file_enabled=${NEO4J_apoc_export_file_enabled}
+      - NEO4J_apoc_import_file_enabled=${NEO4J_apoc_import_file_enabled}
+      - NEO4J_apoc_import_file_use__neo4j__config=${NEO4J_apoc_import_file_use__neo4j__config}
+      - NEO4JLABS_PLUGINS=${NEO4JLABS_PLUGINS}
+      - NEO4J_dbms_connector_bolt_listen__address=:${NEO4J_BOLT_PORT}
+      - NEO4J_dbms_connector_http_listen__address=:${NEO4J_HTTP_PORT}
+      - NEO4J_dbms_security_auth__enabled=${NEO4J_AUTH_ENABLED}
+    networks:
+      - network
+
+  nats:
+    image: nats:latest
+    restart: on-failure
+    container_name: nats
+    hostname: ${NATS_HOSTNAME}
+    expose:
+      - ${NATS_PORT}
+    environment:
+      - NATS_PORT=${NATS_PORT}
+      - NATS_USERNAME=${NATS_USERNAME}
+      - NATS_PASSWORD=${NATS_PASSWORD}
+    command: "-c /etc/nats/nats.conf"
+    volumes:
+        - ./nats.conf:/etc/nats/nats.conf:ro
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

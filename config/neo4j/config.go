@@ -1,5 +1,10 @@
 package neo4j
 
+import (
+	"fmt"
+	"os"
+)
+
 type Config interface {
 	Uri() string
 	Username() string
@@ -8,23 +13,25 @@ type Config interface {
 }
 
 type config struct {
-	uri      string
+	hostname string
+	port     string
 	username string
 	password string
 	dbName   string
 }
 
-func NewDefaultNeo4jConfig() Config {
+func NewConfig() Config {
 	return config{
-		uri:      "bolt://localhost:7687",
-		username: "neo4j",
-		password: "t",
-		dbName:   "neo4j",
+		hostname: os.Getenv("NEO4J_HOSTNAME"),
+		port:     os.Getenv("NEO4J_BOLT_PORT"),
+		username: os.Getenv("NEO4J_USERNAME"),
+		password: os.Getenv("NEO4J_PASSWORD"),
+		dbName:   os.Getenv("NEO4J_DBNAME"),
 	}
 }
 
 func (c config) Uri() string {
-	return c.uri
+	return fmt.Sprintf("bolt://%s:%s", c.hostname, c.port)
 }
 
 func (c config) Username() string {

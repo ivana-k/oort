@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/c12s/oort/config/jetstream"
+	"github.com/c12s/oort/config/nats"
 	"github.com/c12s/oort/config/neo4j"
 	"github.com/c12s/oort/config/redis"
 	"github.com/c12s/oort/config/server"
@@ -9,24 +9,24 @@ import (
 
 type Config interface {
 	Neo4j() neo4j.Config
-	JetStream() jetstream.Config
+	Nats() nats.Config
 	Redis() redis.Config
 	Server() server.Config
 }
 
 type config struct {
-	neo4j     neo4j.Config
-	jetStream jetstream.Config
-	redis     redis.Config
-	server    server.Config
+	neo4j  neo4j.Config
+	nats   nats.Config
+	redis  redis.Config
+	server server.Config
 }
 
 func NewDefaultConfig() Config {
 	return &config{
-		neo4j:     neo4j.NewDefaultNeo4jConfig(),
-		jetStream: jetstream.NewDefaultJetStreamConfig(),
-		redis:     redis.NewRedisConfig(),
-		server:    server.NewDefaultServerConfig(),
+		neo4j:  neo4j.NewConfig(),
+		nats:   nats.NewConfig(),
+		redis:  redis.NewRedisConfig(),
+		server: server.NewConfig(),
 	}
 }
 
@@ -34,8 +34,8 @@ func (c config) Neo4j() neo4j.Config {
 	return c.neo4j
 }
 
-func (c config) JetStream() jetstream.Config {
-	return c.jetStream
+func (c config) Nats() nats.Config {
+	return c.nats
 }
 
 func (c config) Redis() redis.Config {

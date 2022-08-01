@@ -1,24 +1,19 @@
 package server
 
+import "os"
+
 type Config interface {
-	Host() string
 	Port() string
 }
 
 type config struct {
-	host string
 	port string
 }
 
-func NewDefaultServerConfig() Config {
+func NewConfig() Config {
 	return config{
-		host: "",
-		port: "8000",
+		port: os.Getenv("OORT_PORT"),
 	}
-}
-
-func (c config) Host() string {
-	return c.host
 }
 
 func (c config) Port() string {
