@@ -21,8 +21,8 @@ func disconnectResourcesCypher(req syncer.DisconnectResourcesReq) (string, map[s
 			"MATCH (parent)-[conn:Includes]->(child)" +
 			"DELETE conn " +
 			"WITH child " +
-			"CALL apoc.path.spanningTree(child, {relationshipFilter: \"Includes>\"}) YIELD path " +
-			"WITH child, nodes(path) AS descendants " +
+			"CALL apoc.path.subgraphNodes(child, {relationshipFilter: \"Includes>\"}) YIELD node " +
+			"WITH child, collect(node) AS descendants " +
 			"MATCH (descendant) WHERE descendant IN descendants " +
 			"MATCH (ancestor)-[:Includes*]->(descendant) " +
 			"WITH child, descendant, descendants, collect(distinct ancestor) AS ancestors " +
