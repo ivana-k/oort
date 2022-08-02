@@ -2,17 +2,16 @@ package grpc
 
 import (
 	"context"
-	"fmt"
-	"github.com/c12s/oort/domain/handler"
+	"github.com/c12s/oort/domain/checker"
 	"github.com/c12s/oort/proto/checkerpb"
 )
 
 type CheckerGrpcApi struct {
-	handler handler.CheckerHandler
+	handler checker.Handler
 	checkerpb.UnimplementedCheckerServiceServer
 }
 
-func NewCheckerGrpcApi(handler handler.CheckerHandler) CheckerGrpcApi {
+func NewCheckerGrpcApi(handler checker.Handler) CheckerGrpcApi {
 	return CheckerGrpcApi{
 		handler: handler,
 	}
@@ -20,6 +19,5 @@ func NewCheckerGrpcApi(handler handler.CheckerHandler) CheckerGrpcApi {
 
 func (c CheckerGrpcApi) CheckPermission(ctx context.Context, req *checkerpb.CheckPermissionReq) (*checkerpb.CheckResp, error) {
 	resp := c.handler.CheckPermission(req.MapToDomain())
-	fmt.Println(resp.Allowed)
 	return &checkerpb.CheckResp{Allowed: resp.Allowed}, resp.Error
 }

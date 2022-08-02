@@ -1,49 +1,48 @@
-package handler
+package checker
 
 import (
 	"github.com/c12s/oort/domain/model"
-	"github.com/c12s/oort/domain/model/checker"
-	"github.com/c12s/oort/domain/store"
+	"github.com/c12s/oort/domain/store/acl"
 )
 
-type CheckerHandler struct {
-	store store.AclStore
+type Handler struct {
+	store acl.Store
 }
 
-func NewCheckerHandler(store store.AclStore) CheckerHandler {
-	return CheckerHandler{
+func NewHandler(store acl.Store) Handler {
+	return Handler{
 		store: store,
 	}
 }
 
-func (h CheckerHandler) CheckPermission(req checker.CheckPermissionReq) checker.CheckPermissionResp {
-	resp := h.store.GetPermissionByPrecedence(checker.GetPermissionReq{
+func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
+	resp := h.store.GetPermissionByPrecedence(acl.GetPermissionReq{
 		Principal:      req.Principal,
 		Resource:       req.Resource,
 		PermissionName: req.PermissionName,
 	})
 
 	if resp.Error != nil {
-		return checker.CheckPermissionResp{
+		return CheckPermissionResp{
 			Allowed: false,
 			Error:   resp.Error,
 		}
 	}
 
-	principalAttrs := h.store.GetAttributes(checker.GetAttributeReq{
+	principalAttrs := h.store.GetAttributes(acl.GetAttributeReq{
 		Resource: req.Principal,
 	})
 	if principalAttrs.Error != nil {
-		return checker.CheckPermissionResp{
+		return CheckPermissionResp{
 			Allowed: false,
 			Error:   principalAttrs.Error,
 		}
 	}
-	resourceAttrs := h.store.GetAttributes(checker.GetAttributeReq{
+	resourceAttrs := h.store.GetAttributes(acl.GetAttributeReq{
 		Resource: req.Resource,
 	})
 	if resourceAttrs.Error != nil {
-		return checker.CheckPermissionResp{
+		return CheckPermissionResp{
 			Allowed: false,
 			Error:   resourceAttrs.Error,
 		}
@@ -57,7 +56,7 @@ func (h CheckerHandler) CheckPermission(req checker.CheckPermissionReq) checker.
 		allowed = false
 	}
 
-	return checker.CheckPermissionResp{
+	return CheckPermissionResp{
 		Allowed: allowed,
 		Error:   nil,
 	}

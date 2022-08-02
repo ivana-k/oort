@@ -57,8 +57,12 @@ func (x *Resource) MapToDomain() model.Resource {
 	return model.NewResource(x.Id, x.Kind)
 }
 
-func (x *Permission) MapToDomain() model.Permission {
+func (x *Permission) MapToDomain() (model.Permission, error) {
+	condition, err := model.NewCondition(x.Condition.Expression)
+	if err != nil {
+		return model.Permission{}, err
+	}
 	return model.NewPermission(x.Name,
 		model.PermissionKind(x.Kind),
-		model.NewCondition(x.Condition.Expression))
+		*condition), nil
 }
