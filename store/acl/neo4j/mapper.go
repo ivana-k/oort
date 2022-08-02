@@ -1,16 +1,13 @@
 package neo4j
 
 import (
-	"fmt"
 	"github.com/c12s/oort/domain/model"
 	"sort"
 )
 
 func getAttributes(cypherResults interface{}) []model.Attribute {
 	attributes := make([]model.Attribute, 0)
-	fmt.Println(cypherResults)
 	for _, result := range cypherResults.([]interface{}) {
-		fmt.Println(result)
 		attrMap := result.(map[string]interface{})
 		attr := model.NewAttribute(
 			model.NewAttributeId(

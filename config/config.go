@@ -21,7 +21,7 @@ type config struct {
 	server server.Config
 }
 
-func NewDefaultConfig() Config {
+func NewConfig() Config {
 	return &config{
 		neo4j:  neo4j.NewConfig(),
 		nats:   nats.NewConfig(),
