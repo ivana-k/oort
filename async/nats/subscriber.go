@@ -9,24 +9,16 @@ import (
 const ackMaxRetry int8 = 5
 
 type Subscriber struct {
-	jsContext    nats.JetStreamContext
+	conn         *nats.Conn
 	subscription *nats.Subscription
 }
 
 func NewSubscriber(conn *nats.Conn) (async.Subscriber, error) {
-	js, err := conn.JetStream()
-	if err != nil {
-		return nil, err
-	}
-	_, err = js.AddStream(&nats.StreamConfig{
-		Name:     "SYNC",
-		Subjects: []string{"sync"},
-	})
-	if err != nil {
-		return nil, err
+	if conn == nil {
+		return nil, errors.New("conn nil")
 	}
 	return &Subscriber{
-		jsContext: js,
+		conn: conn,
 	}, nil
 }
 
@@ -34,7 +26,7 @@ func (s *Subscriber) Subscribe(subject, queueGroup string, handler func(msg []by
 	if s.subscription != nil {
 		return errors.New("already subscribed")
 	}
-	subscription, err := s.jsContext.QueueSubscribe(subject, queueGroup, func(msg *nats.Msg) {
+	subscription, err := s.conn.QueueSubscribe(subject, queueGroup, func(msg *nats.Msg) {
 		err := handler(msg.Data)
 		if err != nil {
 			s.ackRetry(msg.Nak, ackMaxRetry)

@@ -1,32 +1,24 @@
 package nats
 
 import (
+	"errors"
 	"github.com/c12s/oort/poller/domain/async"
 	"github.com/nats-io/nats.go"
 )
 
 type Publisher struct {
-	jsContext nats.JetStreamContext
+	conn *nats.Conn
 }
 
 func NewPublisher(conn *nats.Conn) (async.Publisher, error) {
-	js, err := conn.JetStream()
-	if err != nil {
-		return nil, err
-	}
-	_, err = js.AddStream(&nats.StreamConfig{
-		Name:     "nzm",
-		Subjects: []string{"sync.response"},
-	})
-	if err != nil {
-		return nil, err
+	if conn == nil {
+		return nil, errors.New("conn nil")
 	}
 	return &Publisher{
-		jsContext: js,
+		conn: conn,
 	}, nil
 }
 
 func (p Publisher) Publish(subject string, message []byte) error {
-	_, err := p.jsContext.Publish(subject, message)
-	return err
+	return p.conn.Publish(subject, message)
 }
