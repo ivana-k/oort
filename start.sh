@@ -18,5 +18,7 @@ export NATS_ENABLE_AUTH=yes
 export NATS_USERNAME=user
 export NATS_PASSWORD=pass
 
+export POLL_INTERVAL_IN_MS=5000
+
 docker-compose build
 docker-compose up

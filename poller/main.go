@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"github.com/c12s/oort/poller/app"
+	"github.com/c12s/oort/poller/config"
+)
 
 func main() {
-	fmt.Println("hello from poller")
+	conf := config.NewConfig()
+	app.Run(conf)
 }

@@ -40,6 +40,7 @@ services:
       - NATS_PORT=${NATS_PORT}
       - NATS_USERNAME=${NATS_USERNAME}
       - NATS_PASSWORD=${NATS_PASSWORD}
+      - POLL_INTERVAL_IN_MS=${POLL_INTERVAL_IN_MS}
     depends_on:
         - neo4j
         - nats

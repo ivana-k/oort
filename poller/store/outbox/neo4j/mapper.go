@@ -11,7 +11,7 @@ func getOutboxMessages(cypherResults interface{}) []model.OutboxMessage {
 	for _, result := range cypherResults.([]interface{}) {
 		messageAttrs := result.([]interface{})
 		message := model.OutboxMessage{
-			Id:      messageAttrs[0].(string),
+			Id:      messageAttrs[0].(int64),
 			Kind:    messageAttrs[1].(string),
 			Payload: messageAttrs[2].([]byte),
 		}
