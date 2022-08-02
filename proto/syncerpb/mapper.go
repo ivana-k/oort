@@ -2,12 +2,14 @@ package syncerpb
 
 import (
 	"github.com/c12s/oort/domain/async"
-	"github.com/c12s/oort/domain/model/syncer"
+	"github.com/c12s/oort/domain/model"
+	"github.com/c12s/oort/domain/syncer"
 	"google.golang.org/protobuf/proto"
 )
 
 func (x *ConnectResourcesReq) MapToDomain() (syncer.Request, error) {
 	return syncer.ConnectResourcesReq{
+		ReqId:  x.Id,
 		Parent: x.Parent.MapToDomain(),
 		Child:  x.Child.MapToDomain(),
 	}, nil
@@ -15,6 +17,7 @@ func (x *ConnectResourcesReq) MapToDomain() (syncer.Request, error) {
 
 func (x *DisconnectResourcesReq) MapToDomain() (syncer.Request, error) {
 	return syncer.DisconnectResourcesReq{
+		ReqId:  x.Id,
 		Parent: x.Parent.MapToDomain(),
 		Child:  x.Child.MapToDomain(),
 	}, nil
@@ -26,6 +29,7 @@ func (x *UpsertAttributeReq) MapToDomain() (syncer.Request, error) {
 		return syncer.UpsertAttributeReq{}, err
 	}
 	return syncer.UpsertAttributeReq{
+		ReqId:     x.Id,
 		Resource:  x.Resource.MapToDomain(),
 		Attribute: attr,
 	}, nil
@@ -33,6 +37,7 @@ func (x *UpsertAttributeReq) MapToDomain() (syncer.Request, error) {
 
 func (x *RemoveAttributeReq) MapToDomain() (syncer.Request, error) {
 	return syncer.RemoveAttributeReq{
+		ReqId:       x.Id,
 		Resource:    x.Resource.MapToDomain(),
 		AttributeId: x.AttributeId.MapToDomain(),
 	}, nil
@@ -44,6 +49,7 @@ func (x *InsertPermissionReq) MapToDomain() (syncer.Request, error) {
 		return nil, err
 	}
 	return syncer.InsertPermissionReq{
+		ReqId:      x.Id,
 		Principal:  x.Principal.MapToDomain(),
 		Resource:   x.Resource.MapToDomain(),
 		Permission: permission,
@@ -56,6 +62,7 @@ func (x *RemovePermissionReq) MapToDomain() (syncer.Request, error) {
 		return nil, err
 	}
 	return syncer.RemovePermissionReq{
+		ReqId:      x.Id,
 		Principal:  x.Principal.MapToDomain(),
 		Resource:   x.Resource.MapToDomain(),
 		Permission: permission,
@@ -92,7 +99,6 @@ func (x *SyncReq) Request() (syncer.Request, error) {
 		request = req
 	default:
 		request = nil
-		request = nil
 	}
 	if err != nil {
 		return nil, err
@@ -100,10 +106,22 @@ func (x *SyncReq) Request() (syncer.Request, error) {
 	return request.MapToDomain()
 }
 
-func (x *SyncReq) MsgId() string {
-	return x.Id
+func (x *SyncReq) MessageKind() async.SyncMsgKind {
+	return async.SyncMsgKind(x.Kind)
 }
 
-func (x *SyncReq) MsgKind() async.SyncMsgKind {
-	return async.SyncMsgKind(x.Kind)
+func NewSyncRespOutboxMessage(reqId string, error string, successful bool) *model.OutboxMessage {
+	resp := AsyncSyncResp{
+		ReqId:      reqId,
+		Error:      error,
+		Successful: successful,
+	}
+	payload, err := proto.Marshal(&resp)
+	if err != nil {
+		return nil
+	}
+	return &model.OutboxMessage{
+		Kind:    model.SyncRespOutboxMessageKind,
+		Payload: payload,
+	}
 }

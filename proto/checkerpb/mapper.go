@@ -1,7 +1,7 @@
 package checkerpb
 
 import (
-	"github.com/c12s/oort/domain/model/checker"
+	"github.com/c12s/oort/domain/checker"
 )
 
 func (x *CheckPermissionReq) MapToDomain() checker.CheckPermissionReq {

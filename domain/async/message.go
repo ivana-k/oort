@@ -1,6 +1,8 @@
 package async
 
-import "github.com/c12s/oort/domain/model/syncer"
+import (
+	"github.com/c12s/oort/domain/syncer"
+)
 
 type SyncMsgKind int
 
@@ -14,8 +16,7 @@ const (
 )
 
 type SyncMessage interface {
-	MsgId() string
-	MsgKind() SyncMsgKind
+	MessageKind() SyncMsgKind
 	Request() (syncer.Request, error)
 }
 

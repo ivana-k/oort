@@ -1,6 +1,10 @@
-package checker
+package acl
 
 import "github.com/c12s/oort/domain/model"
+
+type SyncResp struct {
+	Error error
+}
 
 type GetAttributeResp struct {
 	Attributes []model.Attribute
@@ -10,9 +14,4 @@ type GetAttributeResp struct {
 type GetPermissionByPrecedenceResp struct {
 	Hierarchy model.PermissionHierarchy
 	Error     error
-}
-
-type CheckPermissionResp struct {
-	Allowed bool
-	Error   error
 }

@@ -7,7 +7,8 @@ import (
 	syncergrpc "github.com/c12s/oort/api/syncer/grpc"
 	"github.com/c12s/oort/async/nats"
 	"github.com/c12s/oort/config"
-	"github.com/c12s/oort/domain/handler"
+	"github.com/c12s/oort/domain/checker"
+	"github.com/c12s/oort/domain/syncer"
 	"github.com/c12s/oort/proto/checkerpb"
 	"github.com/c12s/oort/proto/syncerpb"
 	"github.com/c12s/oort/store/acl/neo4j"
@@ -26,8 +27,8 @@ func Run(config config.Config) {
 	}
 	aclStore := neo4j.NewAclStore(manager)
 
-	checkerHandler := handler.NewCheckerHandler(aclStore)
-	syncerHandler := handler.NewSyncerHandler(aclStore)
+	checkerHandler := checker.NewHandler(aclStore)
+	syncerHandler := syncer.NewHandler(aclStore, syncerpb.NewSyncRespOutboxMessage)
 
 	checkerGrpcApi := checkergrpc.NewCheckerGrpcApi(checkerHandler)
 	syncerGrpcApi := syncergrpc.NewSyncerGrpcApi(syncerHandler)

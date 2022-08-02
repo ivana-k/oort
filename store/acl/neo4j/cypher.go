@@ -1,11 +1,11 @@
 package neo4j
 
 import (
-	"github.com/c12s/oort/domain/model/checker"
-	"github.com/c12s/oort/domain/model/syncer"
+	"github.com/c12s/oort/domain/model"
+	"github.com/c12s/oort/domain/store/acl"
 )
 
-func connectResourcesCypher(req syncer.ConnectResourcesReq) (string, map[string]interface{}) {
+func connectResourcesCypher(req acl.ConnectResourcesReq) (string, map[string]interface{}) {
 	return "MERGE (parent:Resource{id: $parentId, kind: $parentKind}) " +
 			"MERGE (child:Resource{id: $childId, kind: $childKind}) " +
 			"MERGE (parent)-[:Includes]->(child) " +
@@ -15,7 +15,7 @@ func connectResourcesCypher(req syncer.ConnectResourcesReq) (string, map[string]
 			"childId": req.Child.Id(), "childKind": req.Child.Kind()}
 }
 
-func disconnectResourcesCypher(req syncer.DisconnectResourcesReq) (string, map[string]interface{}) {
+func disconnectResourcesCypher(req acl.DisconnectResourcesReq) (string, map[string]interface{}) {
 	return "MATCH (parent:Resource{id: $parentId, kind: $parentKind}) " +
 			"MATCH (child:Resource{id: $childId, kind: $childKind}) " +
 			"MATCH (parent)-[conn:Includes]->(child)" +
@@ -37,7 +37,7 @@ func disconnectResourcesCypher(req syncer.DisconnectResourcesReq) (string, map[s
 			"childId": req.Child.Id(), "childKind": req.Child.Kind()}
 }
 
-func upsertAttributeCypher(req syncer.UpsertAttributeReq) (string, map[string]interface{}) {
+func upsertAttributeCypher(req acl.UpsertAttributeReq) (string, map[string]interface{}) {
 	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
 			"MERGE (attribute:Attribute{name: $attrName})" +
 			"<-[:Includes]-(resource) " +
@@ -47,7 +47,7 @@ func upsertAttributeCypher(req syncer.UpsertAttributeReq) (string, map[string]in
 			"attrValue": req.Attribute.Value()}
 }
 
-func removeAttributeCypher(req syncer.RemoveAttributeReq) (string, map[string]interface{}) {
+func removeAttributeCypher(req acl.RemoveAttributeReq) (string, map[string]interface{}) {
 	return "MATCH (:Resource{id: $id, kind: $kind})" +
 			"-[:Includes]->" +
 			"(attribute:Attribute{name: $attrName, kind: $attrKind})" +
@@ -56,14 +56,14 @@ func removeAttributeCypher(req syncer.RemoveAttributeReq) (string, map[string]in
 			"attrName": req.AttributeId.Name(), "attrKind": req.AttributeId.Kind()}
 }
 
-func getAttributeCypher(req checker.GetAttributeReq) (string, map[string]interface{}) {
+func getAttributeCypher(req acl.GetAttributeReq) (string, map[string]interface{}) {
 	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
 			"MATCH (attr:Attribute)<-[:Includes]-(resource) " +
 			"RETURN properties(attr)",
 		map[string]interface{}{"id": req.Resource.Id(), "kind": req.Resource.Kind()}
 }
 
-func insertPermissionCypher(req syncer.InsertPermissionReq) (string, map[string]interface{}) {
+func insertPermissionCypher(req acl.InsertPermissionReq) (string, map[string]interface{}) {
 	return "MERGE (principal:Resource{id: $principalId, kind: $principalKind}) " +
 			"MERGE (resource:Resource{id: $resourceId, kind: $resourceKind}) " +
 			"MERGE (principal)-[p:Permission{name: $name}]->(resource) " +
@@ -75,7 +75,7 @@ func insertPermissionCypher(req syncer.InsertPermissionReq) (string, map[string]
 			"kind": req.Permission.Kind(), "condition": req.Permission.Condition().Expression()}
 }
 
-func removePermissionCypher(req syncer.RemovePermissionReq) (string, map[string]interface{}) {
+func removePermissionCypher(req acl.RemovePermissionReq) (string, map[string]interface{}) {
 	return "MATCH (principal:Resource{id: $principalId, kind: $principalKind}) " +
 			"MATCH (resource:Resource{id: $resourceId, kind: $resourceKind}) " +
 			"MATCH (principal)-[p:Permission{name: $name, kind: $kind}]->(resource) " +
@@ -85,7 +85,7 @@ func removePermissionCypher(req syncer.RemovePermissionReq) (string, map[string]
 			"kind": req.Permission.Kind()}
 }
 
-func getPermissionAndDistanceToPrincipal(req checker.GetPermissionReq) (string, map[string]interface{}) {
+func getPermissionAndDistanceToPrincipal(req acl.GetPermissionReq) (string, map[string]interface{}) {
 	return "MATCH (principal:Resource{id: $principalId, kind: $principalKind}) " +
 			"MATCH (resource:Resource{id: $resourceId, kind: $resourceKind}) " +
 			"MATCH (principal)-[:Includes*]->(pParent:Resource)-[permission:Permission{name: $name}]" +
@@ -97,4 +97,9 @@ func getPermissionAndDistanceToPrincipal(req checker.GetPermissionReq) (string, 
 			"ORDER BY distance ASC",
 		map[string]interface{}{"principalId": req.Principal.Id(), "principalKind": req.Principal.Kind(),
 			"resourceId": req.Resource.Id(), "resourceKind": req.Resource.Kind(), "name": req.PermissionName}
+}
+
+func getOutboxMessageCypher(message model.OutboxMessage) (string, map[string]interface{}) {
+	return "CREATE (:OutboxMessage{kind: $kind, payload: $payload, processing: $processing})",
+		map[string]interface{}{"kind": message.Kind, "payload": message.Payload, "processing": false}
 }

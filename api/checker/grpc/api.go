@@ -2,16 +2,16 @@ package grpc
 
 import (
 	"context"
-	"github.com/c12s/oort/domain/handler"
+	"github.com/c12s/oort/domain/checker"
 	"github.com/c12s/oort/proto/checkerpb"
 )
 
 type CheckerGrpcApi struct {
-	handler handler.CheckerHandler
+	handler checker.Handler
 	checkerpb.UnimplementedCheckerServiceServer
 }
 
-func NewCheckerGrpcApi(handler handler.CheckerHandler) CheckerGrpcApi {
+func NewCheckerGrpcApi(handler checker.Handler) CheckerGrpcApi {
 	return CheckerGrpcApi{
 		handler: handler,
 	}

@@ -2,7 +2,7 @@ package syncerpb
 
 import (
 	"github.com/c12s/oort/domain/async"
-	"github.com/c12s/oort/domain/model/syncer"
+	"github.com/c12s/oort/domain/syncer"
 	"google.golang.org/protobuf/proto"
 )
 
