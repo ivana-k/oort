@@ -1,24 +1,37 @@
 package checker
 
 import (
+	"fmt"
 	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/store/acl"
 	"github.com/c12s/oort/domain/store/cache"
 )
 
 type Handler struct {
-	store acl.Store
-	cache cache.Cache
+	store               acl.Store
+	cache               cache.Cache
+	attrSerializer      AttributeSerializer
+	checkRespSerializer CheckPermissionResponseSerializer
 }
 
-func NewHandler(store acl.Store, cache cache.Cache) Handler {
+func NewHandler(store acl.Store, cache cache.Cache, attrSerializer AttributeSerializer, checkRespSerializer CheckPermissionResponseSerializer) Handler {
 	return Handler{
-		store: store,
-		cache: cache,
+		store:               store,
+		cache:               cache,
+		attrSerializer:      attrSerializer,
+		checkRespSerializer: checkRespSerializer,
 	}
 }
 
 func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
+	if value, err := h.cache.Get(checkRespCacheKey(req)); err == nil {
+		resp, err := h.checkRespSerializer.Deserialize(value)
+		fmt.Println(err)
+		fmt.Println(resp.Error)
+		fmt.Println(resp)
+		return resp
+	}
+
 	resp := h.store.GetPermissionByPrecedence(acl.GetPermissionReq{
 		Principal:      req.Principal,
 		Resource:       req.Resource,
@@ -32,22 +45,18 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		}
 	}
 
-	principalAttrs := h.store.GetAttributes(acl.GetAttributeReq{
-		Resource: req.Principal,
-	})
-	if principalAttrs.Error != nil {
+	principalAttrs, err := h.getAttributes(req.Principal)
+	if err != nil {
 		return CheckPermissionResp{
 			Allowed: false,
-			Error:   principalAttrs.Error,
+			Error:   err,
 		}
 	}
-	resourceAttrs := h.store.GetAttributes(acl.GetAttributeReq{
-		Resource: req.Resource,
-	})
-	if resourceAttrs.Error != nil {
+	resourceAttrs, err := h.getAttributes(req.Resource)
+	if err != nil {
 		return CheckPermissionResp{
 			Allowed: false,
-			Error:   resourceAttrs.Error,
+			Error:   err,
 		}
 	}
 
@@ -59,8 +68,43 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		allowed = false
 	}
 
-	return CheckPermissionResp{
+	checkResp := CheckPermissionResp{
 		Allowed: allowed,
 		Error:   nil,
 	}
+	if value, err := h.checkRespSerializer.Serialize(checkResp); err == nil {
+		_ = h.cache.Set(checkRespCacheKey(req), value, []string{})
+	}
+	return checkResp
+}
+
+func checkRespCacheKey(req CheckPermissionReq) string {
+	return fmt.Sprintf("%s/%s/%s", req.Principal.Id(), req.Resource.Id(), req.PermissionName)
+}
+
+func attrCacheKey(resource model.Resource) string {
+	fmt.Println(resource.Id())
+	return resource.Id()
+}
+
+func (h Handler) getAttributes(resource model.Resource) (acl.GetAttributeResp, error) {
+	var resourceAttrs acl.GetAttributeResp
+	if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
+		resourceAttrs.Attributes, err = h.attrSerializer.Deserialize(value)
+		if err != nil {
+			resourceAttrs.Attributes = nil
+		}
+	}
+	if resourceAttrs.Attributes == nil {
+		resourceAttrs = h.store.GetAttributes(acl.GetAttributeReq{
+			Resource: resource,
+		})
+		if resourceAttrs.Error != nil {
+			return acl.GetAttributeResp{}, resourceAttrs.Error
+		}
+		if bytes, err := h.attrSerializer.Serialize(resourceAttrs.Attributes); err == nil {
+			_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
+		}
+	}
+	return resourceAttrs, nil
 }

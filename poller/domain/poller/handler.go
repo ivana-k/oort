@@ -38,10 +38,12 @@ func (h Handler) Start(intervalInMs int) {
 				err = h.publisher.Publish(message.Kind, message.Payload)
 				if err != nil {
 					fmt.Println(err)
-					_ = h.store.SetUnprocessed(message)
+					err = h.store.SetUnprocessed(message)
+					fmt.Println(err)
 					break
 				}
-				_ = h.store.DeleteById(message)
+				err = h.store.DeleteById(message)
+				fmt.Println(err)
 			}
 		}
 	}

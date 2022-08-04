@@ -12,6 +12,7 @@ import (
 	"github.com/c12s/oort/proto/checkerpb"
 	"github.com/c12s/oort/proto/syncerpb"
 	"github.com/c12s/oort/store/acl/neo4j"
+	cache2 "github.com/c12s/oort/store/cache"
 	"github.com/c12s/oort/store/cache/gocache"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -32,7 +33,7 @@ func Run(config config.Config) {
 		panic(err)
 	}
 
-	checkerHandler := checker.NewHandler(aclStore, cache)
+	checkerHandler := checker.NewHandler(aclStore, cache, cache2.NewProtoAttributeSerializer(), cache2.NewCustomCheckPermissionSerializer())
 	syncerHandler := syncer.NewHandler(aclStore, syncerpb.NewSyncRespOutboxMessage)
 
 	checkerGrpcApi := checkergrpc.NewCheckerGrpcApi(checkerHandler)

@@ -20,6 +20,10 @@ message Attribute {
   bytes value = 2;
 }
 
+message AttributeList {
+  repeated Attribute attributes = 1;
+}
+
 message Int64Attribute {
   int64 value = 1;
 }

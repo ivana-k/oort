@@ -93,6 +93,8 @@ services:
   redis:
     image: redis:6.2-alpine
     restart: on-failure
+    container_name: redis
+    hostname: ${REDIS_HOSTNAME}
     networks:
       - network
 

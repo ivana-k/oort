@@ -3,6 +3,7 @@ package gocache
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/allegro/bigcache/v3"
 	"github.com/c12s/oort/domain/store/cache"
 	gocache "github.com/eko/gocache/v2/cache"
@@ -38,6 +39,8 @@ func (g GoCache) Get(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("VALUE --------")
+	fmt.Println(value)
 	return value.([]byte), nil
 }
 

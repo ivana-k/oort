@@ -17,7 +17,8 @@ func setUnprocessedCypher(message model.OutboxMessage) (string, map[string]inter
 }
 
 func deleteByIdCypher(message model.OutboxMessage) (string, map[string]interface{}) {
-	return "DELETE (msg:OutboxMessage{}) " +
-			"WHERE id(msg) = $id",
+	return "MATCH (msg:OutboxMessage{}) " +
+			"WHERE id(msg) = $id " +
+			"DELETE msg",
 		map[string]interface{}{"id": message.Id}
 }
