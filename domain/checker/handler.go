@@ -3,15 +3,18 @@ package checker
 import (
 	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/store/acl"
+	"github.com/c12s/oort/domain/store/cache"
 )
 
 type Handler struct {
 	store acl.Store
+	cache cache.Cache
 }
 
-func NewHandler(store acl.Store) Handler {
+func NewHandler(store acl.Store, cache cache.Cache) Handler {
 	return Handler{
 		store: store,
+		cache: cache,
 	}
 }
 

@@ -20,11 +20,15 @@ services:
       - NATS_PORT=${NATS_PORT}
       - NATS_USERNAME=${NATS_USERNAME}
       - NATS_PASSWORD=${NATS_PASSWORD}
+      - REDIS_HOSTNAME=${REDIS_HOSTNAME}
+      - REDIS_PORT=${REDIS_PORT}
+      - CACHE_EVICTION_MIN=${CACHE_EVICTION_MIN}
     networks:
       - network
     depends_on:
       - neo4j
       - nats
+      - redis
 
   poller:
     build: ./poller/
@@ -83,6 +87,12 @@ services:
     command: "-c /etc/nats/nats.conf"
     volumes:
         - ./nats.conf:/etc/nats/nats.conf:ro
+    networks:
+      - network
+
+  redis:
+    image: redis:6.2-alpine
+    restart: on-failure
     networks:
       - network
 

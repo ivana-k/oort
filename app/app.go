@@ -12,6 +12,7 @@ import (
 	"github.com/c12s/oort/proto/checkerpb"
 	"github.com/c12s/oort/proto/syncerpb"
 	"github.com/c12s/oort/store/acl/neo4j"
+	"github.com/c12s/oort/store/cache/gocache"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -26,8 +27,12 @@ func Run(config config.Config) {
 		log.Fatal(err)
 	}
 	aclStore := neo4j.NewAclStore(manager)
+	cache, err := gocache.NewGoCache(config.Redis().Address(), config.Redis().Eviction())
+	if err != nil {
+		panic(err)
+	}
 
-	checkerHandler := checker.NewHandler(aclStore)
+	checkerHandler := checker.NewHandler(aclStore, cache)
 	syncerHandler := syncer.NewHandler(aclStore, syncerpb.NewSyncRespOutboxMessage)
 
 	checkerGrpcApi := checkergrpc.NewCheckerGrpcApi(checkerHandler)

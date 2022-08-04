@@ -20,5 +20,9 @@ export NATS_PASSWORD=pass
 
 export POLL_INTERVAL_IN_MS=5000
 
+export REDIS_HOSTNAME=redis
+export REDIS_PORT=6379
+export CACHE_EVICTION_MIN=5
+
 docker-compose build
 docker-compose up

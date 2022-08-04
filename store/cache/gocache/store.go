@@ -15,8 +15,8 @@ type GoCache struct {
 	manager *gocache.ChainCache
 }
 
-func NewGoCache(redisAddress string) (cache.Cache, error) {
-	bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
+func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, error) {
+	bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(localEviction * time.Minute))
 	bigcacheStore := store.NewBigcache(bigcacheClient, nil)
 	redisStore := store.NewRedis(redis.NewClient(&redis.Options{
 		Addr: redisAddress,
