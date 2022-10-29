@@ -46,6 +46,7 @@ func main() {
 	)
 	if err != nil {
 		log.Fatal(err)
+
 	}
 	defer func(closeFunc func() error) {
 		err := closeFunc()
@@ -76,6 +77,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	err = syncerasync.NewSyncerAsyncApi(
 		subscriber,
 		"sync",
