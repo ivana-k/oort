@@ -31,7 +31,7 @@ func getPermission(cypherResult interface{}) (model.Permission, error) {
 		*condition), nil
 }
 
-func sortByDistanceAsc(m map[int]model.PermissionList) model.PermissionHierarchy {
+func sortByDistanceAsc(m map[int]model.PermissionLevel) model.PermissionHierarchy {
 	keys := make([]int, 0)
 	result := make(model.PermissionHierarchy, 0)
 	for key := range m {

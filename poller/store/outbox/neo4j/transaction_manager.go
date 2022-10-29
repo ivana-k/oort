@@ -60,3 +60,7 @@ func (manager *TransactionManager) ReadTransaction(txFunc TransactionFunction) (
 
 	return result, nil
 }
+
+func (manager *TransactionManager) Stop() error {
+	return manager.driver.Close()
+}

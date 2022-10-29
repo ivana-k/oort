@@ -16,9 +16,9 @@ func NewOutboxStore(manager *TransactionManager) outbox.Store {
 	}
 }
 
-func (store OutboxStore) ReserveAndGetUnprocessed() ([]model.OutboxMessage, error) {
+func (store OutboxStore) GetUnprocessed() ([]model.OutboxMessage, error) {
 	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(reserveAndGetUnprocessedCypher())
+		result, err := transaction.Run(getUnprocessedCypher())
 		if err != nil {
 			return nil, err
 		}
@@ -37,17 +37,6 @@ func (store OutboxStore) ReserveAndGetUnprocessed() ([]model.OutboxMessage, erro
 		return []model.OutboxMessage{}, err
 	}
 	return getOutboxMessages(results), nil
-}
-
-func (store OutboxStore) SetUnprocessed(message model.OutboxMessage) error {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(setUnprocessedCypher(message))
-		if err != nil {
-			return nil, err
-		}
-		return nil, result.Err()
-	})
-	return err
 }
 
 func (store OutboxStore) DeleteById(message model.OutboxMessage) error {

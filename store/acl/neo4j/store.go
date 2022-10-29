@@ -175,7 +175,7 @@ func (store AclStore) GetPermissionByPrecedence(req acl.GetPermissionReq) acl.Ge
 		return acl.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
 	}
 
-	distMap := make(map[int]model.PermissionList)
+	distMap := make(map[int]model.PermissionLevel)
 	for _, result := range results.([]interface{}) {
 		distance := int(result.([]interface{})[1].(int64))
 		_, ok := distMap[distance]
