@@ -1,5 +1,28 @@
 package model
 
+type PermissionKind int
+
+const (
+	Allow PermissionKind = iota
+	Deny
+)
+
+type EvalResult int
+
+const (
+	Allowed EvalResult = iota
+	Denied
+	NonEvaluative
+)
+
+const DefaultEvalResult = Denied
+
+type PermissionEvalRequest struct {
+	Resource  []Attribute
+	Principal []Attribute
+	Env       []Attribute
+}
+
 type Permission struct {
 	name      string
 	kind      PermissionKind
@@ -22,65 +45,46 @@ func (p Permission) Kind() PermissionKind {
 	return p.kind
 }
 
-type PermissionKind int
-
-const (
-	Allow PermissionKind = iota
-	Deny
-)
-
-type EvalResult = int
-
-const (
-	Allowed EvalResult = iota
-	Denied
-	Unknown
-)
-
-const DefaultEvalResult EvalResult = Denied
-
 func (p Permission) Condition() Condition {
 	return p.condition
 }
 
-func (p Permission) Eval(principal, resource []Attribute, env map[string]interface{}) EvalResult {
-	if !p.condition.Eval(principal, resource, env) {
-		return Unknown
+func (p Permission) eval(req PermissionEvalRequest) EvalResult {
+	if !p.condition.Eval(req.Principal, req.Resource, req.Env) {
+		return NonEvaluative
 	}
 	if p.kind == Allow {
 		return Allowed
 	}
-	return Denied
+	if p.kind == Deny {
+		return Denied
+	}
+	return NonEvaluative
 }
 
-type PermissionList []Permission
+type PermissionLevel []Permission
 
-func (level PermissionList) Eval(principal, resource []Attribute, env map[string]interface{}) EvalResult {
-	res := Unknown
+func (level PermissionLevel) eval(req PermissionEvalRequest) EvalResult {
+	res := NonEvaluative
 	for _, permission := range level {
-		curr := permission.Eval(principal, resource, env)
-		if curr != Unknown {
+		curr := permission.eval(req)
+		if curr == Denied {
+			return Denied
+		}
+		if curr != NonEvaluative {
 			res = curr
 		}
-		if curr == Denied {
-			break
-		}
 	}
 	return res
 }
 
-type PermissionHierarchy []PermissionList
+type PermissionHierarchy []PermissionLevel
 
-func (hierarchy PermissionHierarchy) Eval(principal, resource []Attribute, env map[string]interface{}) EvalResult {
-	res := Unknown
+func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult {
 	for _, level := range hierarchy {
-		res = level.Eval(principal, resource, env)
-		if res != Unknown {
-			break
+		if res := level.eval(req); res != NonEvaluative {
+			return res
 		}
 	}
-	if res == Unknown {
-		return DefaultEvalResult
-	}
-	return res
+	return DefaultEvalResult
 }

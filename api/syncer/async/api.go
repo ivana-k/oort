@@ -28,8 +28,8 @@ func NewSyncerAsyncApi(subscriber async.Subscriber, subject, queueGroup string, 
 		},
 	}
 	b, _ := proto.Marshal(&req)
-	msg := syncerpb.SyncReq{
-		Kind:    syncerpb.SyncReq_CONNECT_RESOURCES,
+	msg := syncerpb.SyncMessage{
+		Kind:    syncerpb.SyncMessage_CONNECT_RESOURCES,
 		Payload: b,
 	}
 	msgProto, _ := proto.Marshal(&msg)
@@ -50,7 +50,7 @@ func (s SyncerAsyncApi) handle(message []byte) error {
 		return err
 	}
 	var respError error
-	switch msg.MessageKind() {
+	switch msg.RequestKind() {
 	case async.ConnectResources:
 		s.handler.ConnectResources(request.(syncer.ConnectResourcesReq))
 	case async.DisconnectResources:

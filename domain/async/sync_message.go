@@ -16,7 +16,7 @@ const (
 )
 
 type SyncMessage interface {
-	MessageKind() SyncMsgKind
+	RequestKind() SyncMsgKind
 	Request() (syncer.Request, error)
 }
 

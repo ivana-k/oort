@@ -3,7 +3,6 @@ package gocache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/allegro/bigcache/v3"
 	"github.com/c12s/oort/domain/store/cache"
 	gocache "github.com/eko/gocache/v2/cache"
@@ -16,12 +15,11 @@ type GoCache struct {
 	manager *gocache.ChainCache
 }
 
-func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, error) {
+func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, func() error, error) {
 	bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(localEviction * time.Minute))
 	bigcacheStore := store.NewBigcache(bigcacheClient, nil)
-	redisStore := store.NewRedis(redis.NewClient(&redis.Options{
-		Addr: redisAddress,
-	}), nil)
+	redisClient := redis.NewClient(&redis.Options{Addr: redisAddress})
+	redisStore := store.NewRedis(redisClient, nil)
 
 	cacheManager := gocache.NewChain(
 		gocache.New(bigcacheStore),
@@ -29,9 +27,16 @@ func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, 
 	)
 
 	if cacheManager == nil {
-		return nil, errors.New("cache could not be initialized")
+		return nil, nil, errors.New("cache could not be initialized")
 	}
-	return GoCache{manager: cacheManager}, nil
+	return GoCache{manager: cacheManager}, func() error {
+		err := bigcacheClient.Close()
+		if err != nil {
+			return err
+		}
+		err = redisClient.Close()
+		return err
+	}, nil
 }
 
 func (g GoCache) Get(key string) ([]byte, error) {
@@ -39,8 +44,6 @@ func (g GoCache) Get(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("VALUE --------")
-	fmt.Println(value)
 	return value.([]byte), nil
 }
 
