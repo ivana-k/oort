@@ -26,10 +26,9 @@ func NewHandler(store acl.Store, cache cache.Cache, attrSerializer AttributeSeri
 func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 	if value, err := h.cache.Get(checkRespCacheKey(req)); err == nil {
 		resp, err := h.checkRespSerializer.Deserialize(value)
-		fmt.Println(err)
-		fmt.Println(resp.Error)
-		fmt.Println(resp)
-		return resp
+		if err != nil {
+			return resp
+		}
 	}
 
 	resp := h.store.GetPermissionByPrecedence(acl.GetPermissionReq{
@@ -37,74 +36,82 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		Resource:       req.Resource,
 		PermissionName: req.PermissionName,
 	})
-
 	if resp.Error != nil {
-		return CheckPermissionResp{
-			Allowed: false,
-			Error:   resp.Error,
-		}
+		return errorResponse(resp.Error)
 	}
 
-	principalAttrs, err := h.getAttributes(req.Principal)
-	if err != nil {
-		return CheckPermissionResp{
-			Allowed: false,
-			Error:   err,
-		}
+	principalAttrs := h.getAttributes(req.Principal)
+	if principalAttrs.Error != nil {
+		return errorResponse(principalAttrs.Error)
 	}
-	resourceAttrs, err := h.getAttributes(req.Resource)
-	if err != nil {
-		return CheckPermissionResp{
-			Allowed: false,
-			Error:   err,
-		}
+	resourceAttrs := h.getAttributes(req.Resource)
+	if resourceAttrs.Error != nil {
+		return errorResponse(resourceAttrs.Error)
 	}
 
-	result := resp.Hierarchy.Eval(principalAttrs.Attributes, resourceAttrs.Attributes, req.Env)
-	var allowed bool
-	if result == model.Allowed {
-		allowed = true
-	} else {
-		allowed = false
+	evalReq := model.PermissionEvalRequest{
+		Principal: principalAttrs.Attributes,
+		Resource:  resourceAttrs.Attributes,
+		Env:       req.Env,
 	}
+	evalResult := resp.Hierarchy.Eval(evalReq)
 
 	checkResp := CheckPermissionResp{
-		Allowed: allowed,
+		Allowed: allowed(evalResult),
 		Error:   nil,
 	}
+
 	if value, err := h.checkRespSerializer.Serialize(checkResp); err == nil {
 		_ = h.cache.Set(checkRespCacheKey(req), value, []string{})
 	}
+
 	return checkResp
 }
 
+func (h Handler) getAttributes(resource model.Resource) acl.GetAttributeResp {
+	if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
+		attrs, err := h.attrSerializer.Deserialize(value)
+		if err == nil {
+			return acl.GetAttributeResp{
+				Attributes: attrs,
+				Error:      nil,
+			}
+		}
+	}
+
+	attrs := h.store.GetAttributes(acl.GetAttributeReq{Resource: resource})
+	if attrs.Error != nil {
+		return attrs
+	}
+
+	if bytes, err := h.attrSerializer.Serialize(attrs.Attributes); err == nil {
+		_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
+	}
+
+	return attrs
+}
+
 func checkRespCacheKey(req CheckPermissionReq) string {
-	return fmt.Sprintf("%s/%s/%s", req.Principal.Id(), req.Resource.Id(), req.PermissionName)
+	return fmt.Sprintf("%s/%s/%s",
+		req.Principal.Id(),
+		req.Resource.Id(),
+		req.PermissionName)
 }
 
 func attrCacheKey(resource model.Resource) string {
-	fmt.Println(resource.Id())
 	return resource.Id()
 }
 
-func (h Handler) getAttributes(resource model.Resource) (acl.GetAttributeResp, error) {
-	var resourceAttrs acl.GetAttributeResp
-	if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
-		resourceAttrs.Attributes, err = h.attrSerializer.Deserialize(value)
-		if err != nil {
-			resourceAttrs.Attributes = nil
-		}
+func errorResponse(err error) CheckPermissionResp {
+	return CheckPermissionResp{
+		Allowed: false,
+		Error:   err,
 	}
-	if resourceAttrs.Attributes == nil {
-		resourceAttrs = h.store.GetAttributes(acl.GetAttributeReq{
-			Resource: resource,
-		})
-		if resourceAttrs.Error != nil {
-			return acl.GetAttributeResp{}, resourceAttrs.Error
-		}
-		if bytes, err := h.attrSerializer.Serialize(resourceAttrs.Attributes); err == nil {
-			_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
-		}
+}
+
+func allowed(result model.EvalResult) bool {
+	if result == model.Allowed {
+		return true
 	}
-	return resourceAttrs, nil
+	return false
 }

@@ -20,6 +20,9 @@ func New(store outbox.Store, publisher async.Publisher) Handler {
 	}
 }
 
+//TODO: REFACTOR
+//TODO: DOCUMENT
+
 func (h Handler) Start(intervalInMs int) {
 	h.done = make(chan bool)
 	ticker := time.NewTicker(time.Duration(intervalInMs) * time.Millisecond)

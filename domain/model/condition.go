@@ -1,14 +1,14 @@
 package model
 
 import (
-	"errors"
-	"fmt"
 	"github.com/Knetic/govaluate"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"log"
-	"strings"
+)
+
+const (
+	ResourceVarNamePrefix  = "resource_"
+	PrincipalVarNamePrefix = "principal_"
+	EnvVarNamePrefix       = "env_"
 )
 
 type Condition struct {
@@ -27,46 +27,11 @@ func NewCondition(expression string) (*Condition, error) {
 func (c Condition) Expression() string {
 	return c.expression
 }
-
-func validate(expression string) error {
-	expr, err := parser.ParseExpr(expression)
-	if err != nil {
-		return err
-	}
-	ast.Inspect(expr, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.Ident:
-			if !strings.HasPrefix(x.Name, "resource_") && !strings.HasPrefix(x.Name, "principal_") && !strings.HasPrefix(x.Name, "env_") {
-				err = errors.New(fmt.Sprintf("invalid variable name %s", x.Name))
-			}
-		case *ast.BasicLit:
-		case *ast.BinaryExpr:
-			operation := x.Op
-			supported := false
-			for _, sop := range getSupportedOperations() {
-				if sop == operation {
-					supported = true
-					break
-				}
-			}
-			if !supported {
-				err = errors.New(fmt.Sprintf("operation %s not supported", operation))
-			}
-		default:
-			err = errors.New("expression nodes must be literals, variable names or supported operations")
-		}
-		return err == nil
-	})
-	return err
+func (c Condition) IsEmpty() bool {
+	return c.expression == ""
 }
-
-func getSupportedOperations() []token.Token {
-	return []token.Token{token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.LAND,
-		token.LOR, token.EQL, token.LSS, token.GTR, token.NEQ, token.LEQ, token.GEQ}
-}
-
-func (c Condition) Eval(principal, resource []Attribute, env map[string]interface{}) bool {
-	if c.expression == "" {
+func (c Condition) Eval(principal, resource, env []Attribute) bool {
+	if c.IsEmpty() {
 		return true
 	}
 
@@ -78,15 +43,14 @@ func (c Condition) Eval(principal, resource []Attribute, env map[string]interfac
 
 	parameters := make(map[string]interface{}, 8)
 	for _, attr := range principal {
-		parameters["principal_"+attr.Name()] = attr.Value()
+		parameters[PrincipalVarNamePrefix+attr.Name()] = attr.Value()
 	}
 	for _, attr := range resource {
-		parameters["resource_"+attr.Name()] = attr.Value()
+		parameters[ResourceVarNamePrefix+attr.Name()] = attr.Value()
 	}
-	for key, value := range env {
-		parameters["env_"+key] = value
+	for _, attr := range env {
+		parameters[EnvVarNamePrefix+attr.Name()] = attr.Value()
 	}
-	fmt.Println("PARAMS ", parameters)
 
 	result, err := goeExpr.Evaluate(parameters)
 	if err != nil {

@@ -6,6 +6,7 @@ package checkerpb;
 
 import "common.proto";
 
+//TODO: DOCUMENT
 service CheckerService {
   rpc CheckPermission(CheckPermissionReq) returns (CheckResp) {}
 }
@@ -13,7 +14,8 @@ service CheckerService {
 message CheckPermissionReq {
   common.Resource principal = 1;
   common.Resource resource = 2;
-  string permissionName = 3;
+  repeated common.Attribute envAttributes = 3;
+  string permissionName = 4;
 }
 
 message CheckResp {

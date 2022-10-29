@@ -6,5 +6,5 @@ type CheckPermissionReq struct {
 	Principal,
 	Resource model.Resource
 	PermissionName string
-	Env            map[string]interface{}
+	Env            []model.Attribute
 }

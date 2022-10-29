@@ -6,6 +6,7 @@ package syncerpb;
 
 import "common.proto";
 
+//TODO: DOCUMENT
 service SyncerService {
   rpc ConnectResources(ConnectResourcesReq) returns (SyncResp) {}
   rpc DisconnectResources(DisconnectResourcesReq) returns (SyncResp) {}
@@ -53,7 +54,7 @@ message RemovePermissionReq {
   string id = 4;
 }
 
-message SyncReq {
+message SyncMessage {
   enum SyncKind {
     CONNECT_RESOURCES = 0;
     DISCONNECT_RESOURCES = 1;
