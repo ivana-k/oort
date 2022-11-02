@@ -37,6 +37,12 @@ func disconnectResourcesCypher(req acl.DisconnectResourcesReq) (string, map[stri
 			"childId": req.Child.Id(), "childKind": req.Child.Kind()}
 }
 
+func getResourceCypher(req acl.GetResourceReq) (string, map[string]interface{}) {
+	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
+			"RETURN properties(resource)",
+		map[string]interface{}{"id": req.Id, "kind": req.Kind}
+}
+
 func upsertAttributeCypher(req acl.UpsertAttributeReq) (string, map[string]interface{}) {
 	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
 			"MERGE (attribute:Attribute{name: $attrName})" +

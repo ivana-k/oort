@@ -19,6 +19,14 @@ func getAttributes(cypherResults interface{}) []model.Attribute {
 	return attributes
 }
 
+func getResource(cypherResult interface{}) *model.Resource {
+	attrMap := cypherResult.(map[string]interface{})
+	id := attrMap["id"].(string)
+	kind := attrMap["kind"].(string)
+	resource := model.NewResource(id, kind)
+	return &resource
+}
+
 func getPermission(cypherResult interface{}) (model.Permission, error) {
 	permMap := cypherResult.(map[string]interface{})
 	condition, err := model.NewCondition(permMap["condition"].(string))
