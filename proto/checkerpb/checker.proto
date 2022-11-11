@@ -6,8 +6,9 @@ package checkerpb;
 
 import "common.proto";
 
-//TODO: DOCUMENT
 service CheckerService {
+  // CheckPermission checks if principal is allowed to perform action specified by the permission name, on the resource
+  // Additionally, all environment attributes need to be provided as part of the request
   rpc CheckPermission(CheckPermissionReq) returns (CheckResp) {}
 }
 
