@@ -13,7 +13,7 @@ func getAttributes(cypherResults interface{}) []model.Attribute {
 			model.NewAttributeId(
 				attrMap["name"].(string),
 				model.AttributeKind(attrMap["kind"].(int64))),
-			attrMap["value"].([]byte))
+			attrMap["value"])
 		attributes = append(attributes, attr)
 	}
 	return attributes
@@ -46,7 +46,7 @@ func sortByDistanceAsc(m map[int]model.PermissionLevel) model.PermissionHierarch
 		keys = append(keys, key)
 	}
 	sort.Ints(keys)
-	for key := range keys {
+	for _, key := range keys {
 		result = append(result, m[key])
 	}
 	return result
