@@ -20,11 +20,15 @@ services:
       - NATS_PORT=${NATS_PORT}
       - NATS_USERNAME=${NATS_USERNAME}
       - NATS_PASSWORD=${NATS_PASSWORD}
+      - REDIS_HOSTNAME=${REDIS_HOSTNAME}
+      - REDIS_PORT=${REDIS_PORT}
+      - CACHE_EVICTION_MIN=${CACHE_EVICTION_MIN}
     networks:
       - network
     depends_on:
       - neo4j
       - nats
+      - redis
 
   poller:
     build: ./poller/
@@ -48,7 +52,7 @@ services:
         - network
 
   neo4j:
-    image: neo4j:latest
+    image: neo4j:4.4.12
     container_name: neo4j
     hostname: ${NEO4J_HOSTNAME}
     restart: on-failure
@@ -62,7 +66,7 @@ services:
       - NEO4J_apoc_export_file_enabled=${NEO4J_apoc_export_file_enabled}
       - NEO4J_apoc_import_file_enabled=${NEO4J_apoc_import_file_enabled}
       - NEO4J_apoc_import_file_use__neo4j__config=${NEO4J_apoc_import_file_use__neo4j__config}
-      - NEO4JLABS_PLUGINS=${NEO4JLABS_PLUGINS}
+      - NEO4JLABS_PLUGINS=${NEO4J_PLUGINS}
       - NEO4J_dbms_connector_bolt_listen__address=:${NEO4J_BOLT_PORT}
       - NEO4J_dbms_connector_http_listen__address=:${NEO4J_HTTP_PORT}
       - NEO4J_dbms_security_auth__enabled=${NEO4J_AUTH_ENABLED}
@@ -83,6 +87,14 @@ services:
     command: "-c /etc/nats/nats.conf"
     volumes:
         - ./nats.conf:/etc/nats/nats.conf:ro
+    networks:
+      - network
+
+  redis:
+    image: redis:6.2-alpine
+    restart: on-failure
+    container_name: redis
+    hostname: ${REDIS_HOSTNAME}
     networks:
       - network
 

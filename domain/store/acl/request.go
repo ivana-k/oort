@@ -14,6 +14,11 @@ type GetPermissionReq struct {
 	PermissionName string
 }
 
+type GetResourceReq struct {
+	Id   string
+	Kind string
+}
+
 type ConnectResourcesReq struct {
 	Parent,
 	Child model.Resource

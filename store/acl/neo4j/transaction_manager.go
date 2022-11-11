@@ -60,3 +60,10 @@ func (manager *TransactionManager) ReadTransaction(txFunc TransactionFunction) (
 
 	return result, nil
 }
+
+func (manager *TransactionManager) Stop() {
+	err := manager.driver.Close()
+	if err != nil {
+		log.Println("error while closing neo4j conn: ", err)
+	}
+}

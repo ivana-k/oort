@@ -1,6 +1,13 @@
 package acl
 
-import "github.com/c12s/oort/domain/model"
+import (
+	"errors"
+	"github.com/c12s/oort/domain/model"
+)
+
+var (
+	ErrNotFound = errors.New("resource not found")
+)
 
 type SyncResp struct {
 	Error error
@@ -9,6 +16,11 @@ type SyncResp struct {
 type GetAttributeResp struct {
 	Attributes []model.Attribute
 	Error      error
+}
+
+type GetResourceResp struct {
+	Resource *model.Resource
+	Error    error
 }
 
 type GetPermissionByPrecedenceResp struct {

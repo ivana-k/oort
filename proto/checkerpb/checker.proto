@@ -7,13 +7,16 @@ package checkerpb;
 import "common.proto";
 
 service CheckerService {
+  // CheckPermission checks if principal is allowed to perform action specified by the permission name, on the resource
+  // Additionally, all environment attributes need to be provided as part of the request
   rpc CheckPermission(CheckPermissionReq) returns (CheckResp) {}
 }
 
 message CheckPermissionReq {
   common.Resource principal = 1;
   common.Resource resource = 2;
-  string permissionName = 3;
+  repeated common.Attribute envAttributes = 3;
+  string permissionName = 4;
 }
 
 message CheckResp {

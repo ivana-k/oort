@@ -3,6 +3,7 @@ package acl
 type Store interface {
 	ConnectResources(req ConnectResourcesReq) SyncResp
 	DisconnectResources(req DisconnectResourcesReq) SyncResp
+	GetResource(req GetResourceReq) GetResourceResp
 	UpsertAttribute(req UpsertAttributeReq) SyncResp
 	RemoveAttribute(req RemoveAttributeReq) SyncResp
 	GetAttributes(req GetAttributeReq) GetAttributeResp

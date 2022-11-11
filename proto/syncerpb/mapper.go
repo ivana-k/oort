@@ -1,11 +1,14 @@
 package syncerpb
 
 import (
-	"github.com/c12s/oort/domain/async"
 	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/syncer"
 	"google.golang.org/protobuf/proto"
 )
+
+type protoRequest interface {
+	MapToDomain() (syncer.Request, error)
+}
 
 func (x *ConnectResourcesReq) MapToDomain() (syncer.Request, error) {
 	return syncer.ConnectResourcesReq{
@@ -67,47 +70,6 @@ func (x *RemovePermissionReq) MapToDomain() (syncer.Request, error) {
 		Resource:   x.Resource.MapToDomain(),
 		Permission: permission,
 	}, nil
-}
-
-func (x *SyncReq) Request() (syncer.Request, error) {
-	var request ProtoRequest
-	var err error
-	switch x.Kind {
-	case SyncReq_CONNECT_RESOURCES:
-		req := &ConnectResourcesReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncReq_DISCONNECT_RESOURCES:
-		req := &DisconnectResourcesReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncReq_UPSERT_ATTRIBUTE:
-		req := &UpsertAttributeReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncReq_REMOVE_ATTRIBUTE:
-		req := &RemoveAttributeReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncReq_INSERT_PERMISSION:
-		req := &InsertPermissionReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncReq_REMOVE_PERMISSION:
-		req := &RemovePermissionReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	default:
-		request = nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return request.MapToDomain()
-}
-
-func (x *SyncReq) MessageKind() async.SyncMsgKind {
-	return async.SyncMsgKind(x.Kind)
 }
 
 func NewSyncRespOutboxMessage(reqId string, error string, successful bool) *model.OutboxMessage {

@@ -37,6 +37,12 @@ func disconnectResourcesCypher(req acl.DisconnectResourcesReq) (string, map[stri
 			"childId": req.Child.Id(), "childKind": req.Child.Kind()}
 }
 
+func getResourceCypher(req acl.GetResourceReq) (string, map[string]interface{}) {
+	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
+			"RETURN properties(resource)",
+		map[string]interface{}{"id": req.Id, "kind": req.Kind}
+}
+
 func upsertAttributeCypher(req acl.UpsertAttributeReq) (string, map[string]interface{}) {
 	return "MATCH (resource:Resource{id: $id, kind: $kind}) " +
 			"MERGE (attribute:Attribute{name: $attrName})" +
@@ -88,11 +94,9 @@ func removePermissionCypher(req acl.RemovePermissionReq) (string, map[string]int
 func getPermissionAndDistanceToPrincipal(req acl.GetPermissionReq) (string, map[string]interface{}) {
 	return "MATCH (principal:Resource{id: $principalId, kind: $principalKind}) " +
 			"MATCH (resource:Resource{id: $resourceId, kind: $resourceKind}) " +
-			"MATCH (principal)-[:Includes*]->(pParent:Resource)-[permission:Permission{name: $name}]" +
+			"MATCH (principal)<-[:Includes*]-(pParent:Resource)-[permission:Permission{name: $name}]" +
 			"->(:Resource)-[:Includes*]->(resource)" +
-			"MATCH path=((principal)-[:Includes*]->(pParent:Resource)) " +
-			"OPTIONAL MATCH (principalAttr:Attribute)<-[:Includes]-(principal) " +
-			"OPTIONAL MATCH (resourceAttr:Attribute)<-[:Includes]-(resource) " +
+			"MATCH path= " + /* TODO: shortestPath */ "((principal)<-[:Includes*]-(pParent:Resource)) " +
 			"RETURN properties(permission), (size(collect(distinct (nodes(path))))-1) as distance " +
 			"ORDER BY distance ASC",
 		map[string]interface{}{"principalId": req.Principal.Id(), "principalKind": req.Principal.Kind(),

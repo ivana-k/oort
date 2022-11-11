@@ -13,10 +13,18 @@ func getAttributes(cypherResults interface{}) []model.Attribute {
 			model.NewAttributeId(
 				attrMap["name"].(string),
 				model.AttributeKind(attrMap["kind"].(int64))),
-			attrMap["value"].([]byte))
+			attrMap["value"])
 		attributes = append(attributes, attr)
 	}
 	return attributes
+}
+
+func getResource(cypherResult interface{}) *model.Resource {
+	attrMap := cypherResult.(map[string]interface{})
+	id := attrMap["id"].(string)
+	kind := attrMap["kind"].(string)
+	resource := model.NewResource(id, kind)
+	return &resource
 }
 
 func getPermission(cypherResult interface{}) (model.Permission, error) {
@@ -31,14 +39,14 @@ func getPermission(cypherResult interface{}) (model.Permission, error) {
 		*condition), nil
 }
 
-func sortByDistanceAsc(m map[int]model.PermissionList) model.PermissionHierarchy {
+func sortByDistanceAsc(m map[int]model.PermissionLevel) model.PermissionHierarchy {
 	keys := make([]int, 0)
 	result := make(model.PermissionHierarchy, 0)
 	for key := range m {
 		keys = append(keys, key)
 	}
 	sort.Ints(keys)
-	for key := range keys {
+	for _, key := range keys {
 		result = append(result, m[key])
 	}
 	return result

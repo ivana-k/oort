@@ -55,6 +55,28 @@ func (store AclStore) DisconnectResources(req acl.DisconnectResourcesReq) acl.Sy
 	return acl.SyncResp{Error: err}
 }
 
+func (store AclStore) GetResource(req acl.GetResourceReq) acl.GetResourceResp {
+	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(getResourceCypher(req))
+		if err != nil {
+			return nil, err
+		}
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+
+		if !result.Next() {
+			return nil, acl.ErrNotFound
+		}
+		return result.Record().Values[0], nil
+	})
+
+	if err != nil {
+		return acl.GetResourceResp{Resource: nil, Error: err}
+	}
+	return acl.GetResourceResp{Resource: getResource(results), Error: nil}
+}
+
 func (store AclStore) UpsertAttribute(req acl.UpsertAttributeReq) acl.SyncResp {
 	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		result, err := transaction.Run(upsertAttributeCypher(req))
@@ -175,7 +197,7 @@ func (store AclStore) GetPermissionByPrecedence(req acl.GetPermissionReq) acl.Ge
 		return acl.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
 	}
 
-	distMap := make(map[int]model.PermissionList)
+	distMap := make(map[int]model.PermissionLevel)
 	for _, result := range results.([]interface{}) {
 		distance := int(result.([]interface{})[1].(int64))
 		_, ok := distMap[distance]

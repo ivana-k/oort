@@ -18,6 +18,18 @@ func (x *Attribute) MapToDomain() (model.Attribute, error) {
 	return model.NewAttribute(x.Id.MapToDomain(), value), nil
 }
 
+func (x *AttributeList) MapToDomain() ([]model.Attribute, error) {
+	attributes := make([]model.Attribute, 0)
+	for _, attribute := range x.Attributes {
+		domainAttribute, err := attribute.MapToDomain()
+		if err != nil {
+			return nil, err
+		}
+		attributes = append(attributes, domainAttribute)
+	}
+	return attributes, nil
+}
+
 func (x *Attribute) originalValue() (interface{}, error) {
 	switch x.Id.Kind {
 	case AttributeId_INT64:
