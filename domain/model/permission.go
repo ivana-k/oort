@@ -3,19 +3,19 @@ package model
 type PermissionKind int
 
 const (
-	Allow PermissionKind = iota
-	Deny
+	PermissionKindAllow PermissionKind = iota
+	PermissionKindDeny
 )
 
 type EvalResult int
 
 const (
-	Allowed EvalResult = iota
-	Denied
-	NonEvaluative
+	EvalResultAllowed EvalResult = iota
+	EvalResultDenied
+	EvalResultNonEvaluative
 )
 
-const DefaultEvalResult = Denied
+const DefaultEvalResult = EvalResultDenied
 
 type PermissionEvalRequest struct {
 	Resource  []Attribute
@@ -51,27 +51,27 @@ func (p Permission) Condition() Condition {
 
 func (p Permission) eval(req PermissionEvalRequest) EvalResult {
 	if !p.condition.Eval(req.Principal, req.Resource, req.Env) {
-		return NonEvaluative
+		return EvalResultNonEvaluative
 	}
-	if p.kind == Allow {
-		return Allowed
+	if p.kind == PermissionKindAllow {
+		return EvalResultAllowed
 	}
-	if p.kind == Deny {
-		return Denied
+	if p.kind == PermissionKindDeny {
+		return EvalResultDenied
 	}
-	return NonEvaluative
+	return EvalResultNonEvaluative
 }
 
 type PermissionLevel []Permission
 
 func (level PermissionLevel) eval(req PermissionEvalRequest) EvalResult {
-	res := NonEvaluative
+	res := EvalResultNonEvaluative
 	for _, permission := range level {
 		curr := permission.eval(req)
-		if curr == Denied {
-			return Denied
+		if curr == EvalResultDenied {
+			return EvalResultDenied
 		}
-		if curr != NonEvaluative {
+		if curr != EvalResultNonEvaluative {
 			res = curr
 		}
 	}
@@ -82,7 +82,7 @@ type PermissionHierarchy []PermissionLevel
 
 func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult {
 	for _, level := range hierarchy {
-		if res := level.eval(req); res != NonEvaluative {
+		if res := level.eval(req); res != EvalResultNonEvaluative {
 			return res
 		}
 	}

@@ -110,7 +110,7 @@ func errorResponse(err error) CheckPermissionResp {
 }
 
 func allowed(result model.EvalResult) bool {
-	if result == model.Allowed {
+	if result == model.EvalResultAllowed {
 		return true
 	}
 	return false
