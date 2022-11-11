@@ -8,11 +8,27 @@ import "common.proto";
 
 //TODO: DOCUMENT
 service SyncerService {
+  // ConnectResources forms a hierarchical relationship between the specified parent and child resources
+  // Additionally, if any of the resources weren't previously present, this rpc creates them
   rpc ConnectResources(ConnectResourcesReq) returns (SyncResp) {}
+  // DisconnectResources removes a hierarchical relationship between the specified parent and child resources
+  // After removing the relationship, all orphan resources will also be removed
   rpc DisconnectResources(DisconnectResourcesReq) returns (SyncResp) {}
+  // UpsertAttribute attaches a new attribute to the specified resource, or updates the value of the existing one
+  // Every attribute is uniquely identified by its name. Currently supported attributed types are:
+  // - int64
+  // - float64
+  // - bool
+  // - string
+  // All attribute values are serialized with the help of protobuf
   rpc UpsertAttribute(UpsertAttributeReq) returns (SyncResp) {}
+  // RemoveAttribute removes an attribute by its name, from the specified resource
   rpc RemoveAttribute(RemoveAttributeReq) returns (SyncResp) {}
+  // InsertPermission forms a permission relationship between subject (principal) and object (resource) resources
+  // Additionally, if any of the resources wasn't previously present, this rpc creates them
   rpc InsertPermission(InsertPermissionReq) returns (SyncResp) {}
+  // RemovePermission removes a permission relationship between subject (principal) and object (resource) resources
+  // Permission's name and kind need to match in order to remove it
   rpc RemovePermission(RemovePermissionReq) returns (SyncResp) {}
 }
 
