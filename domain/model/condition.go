@@ -2,13 +2,6 @@ package model
 
 import (
 	"github.com/Knetic/govaluate"
-	"log"
-)
-
-const (
-	ResourceVarNamePrefix  = "resource_"
-	PrincipalVarNamePrefix = "principal_"
-	EnvVarNamePrefix       = "env_"
 )
 
 type Condition struct {
@@ -37,7 +30,6 @@ func (c Condition) Eval(principal, resource, env []Attribute) bool {
 
 	goeExpr, err := govaluate.NewEvaluableExpression(c.expression)
 	if err != nil {
-		log.Print(err)
 		return false
 	}
 
@@ -54,7 +46,6 @@ func (c Condition) Eval(principal, resource, env []Attribute) bool {
 
 	result, err := goeExpr.Evaluate(parameters)
 	if err != nil {
-		log.Print(err)
 		return false
 	}
 	boolResult, ok := result.(bool)

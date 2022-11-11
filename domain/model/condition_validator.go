@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+const (
+	ResourceVarNamePrefix  = "resource_"
+	PrincipalVarNamePrefix = "principal_"
+	EnvVarNamePrefix       = "env_"
+)
+
 var validOperations = []token.Token{
 	token.ADD,
 	token.SUB,
@@ -28,16 +34,21 @@ var (
 	ErrInvalidOperation    = errors.New("expression operation invalid")
 	ErrInvalidVariableName = errors.New("expression variable name invalid")
 	ErrInvalidNode         = errors.New("expression nodes must be literals, variable names or supported operations")
+	ErrParsing             = errors.New("not an expression")
 )
 
 func validate(expression string) error {
+	if len(expression) == 0 {
+		return nil
+	}
 	expr, err := parser.ParseExpr(expression)
 	if err != nil {
-		return err
+		return ErrParsing
 	}
 	ast.Inspect(expr, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.BasicLit:
+		case *ast.ParenExpr:
 		case *ast.Ident:
 			if !validVariableNamePrefix(x.Name) {
 				err = ErrInvalidVariableName
@@ -46,6 +57,7 @@ func validate(expression string) error {
 			if !validOperation(x.Op) {
 				err = ErrInvalidOperation
 			}
+		case nil:
 		default:
 			err = ErrInvalidNode
 		}
