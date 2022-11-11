@@ -32,28 +32,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func(manager *neo4j.TransactionManager) {
-		err := manager.Stop()
-		if err != nil {
-			log.Println("error while closing neo4j conn: ", err)
-		}
-	}(manager)
+	defer manager.Stop()
 
 	aclStore := neo4j.NewAclStore(manager)
-	c, closeFunc, err := gocache.NewGoCache(
+	c, err := gocache.NewGoCache(
 		cfg.Redis().Address(),
 		cfg.Redis().Eviction(),
 	)
 	if err != nil {
 		log.Fatal(err)
-
 	}
-	defer func(closeFunc func() error) {
-		err := closeFunc()
-		if err != nil {
-			log.Println("error while closing cache conns: ", err)
-		}
-	}(closeFunc)
+	defer c.Stop()
 
 	checkerHandler := checker.NewHandler(
 		aclStore, c,
@@ -75,7 +64,7 @@ func main() {
 	defer natsConn.Close()
 	subscriber, err := nats.NewSubscriber(natsConn)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = syncerasync.NewSyncerAsyncApi(

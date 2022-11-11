@@ -8,14 +8,17 @@ import (
 	gocache "github.com/eko/gocache/v2/cache"
 	"github.com/eko/gocache/v2/store"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"time"
 )
 
 type GoCache struct {
-	manager *gocache.ChainCache
+	manager        *gocache.ChainCache
+	redisClient    *redis.Client
+	bigcacheClient *bigcache.BigCache
 }
 
-func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, func() error, error) {
+func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, error) {
 	bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(localEviction * time.Minute))
 	bigcacheStore := store.NewBigcache(bigcacheClient, nil)
 	redisClient := redis.NewClient(&redis.Options{Addr: redisAddress})
@@ -27,15 +30,12 @@ func NewGoCache(redisAddress string, localEviction time.Duration) (cache.Cache, 
 	)
 
 	if cacheManager == nil {
-		return nil, nil, errors.New("cache could not be initialized")
+		return nil, errors.New("cache could not be initialized")
 	}
-	return GoCache{manager: cacheManager}, func() error {
-		bcErr := bigcacheClient.Close()
-		redisErr := redisClient.Close()
-		if bcErr != nil || redisErr != nil {
-			return errors.New("cache close conn err")
-		}
-		return nil
+	return GoCache{
+		manager:        cacheManager,
+		redisClient:    redisClient,
+		bigcacheClient: bigcacheClient,
 	}, nil
 }
 
@@ -57,4 +57,15 @@ func (g GoCache) Invalidate(tags []string) error {
 	return g.manager.Invalidate(context.TODO(), store.InvalidateOptions{
 		Tags: tags,
 	})
+}
+
+func (g GoCache) Stop() {
+	err := g.bigcacheClient.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	err = g.redisClient.Close()
+	if err != nil {
+		log.Println(err)
+	}
 }
