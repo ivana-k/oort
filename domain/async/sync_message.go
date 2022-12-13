@@ -7,12 +7,17 @@ import (
 type SyncMsgKind int
 
 const (
-	ConnectResources SyncMsgKind = iota
-	DisconnectResources
-	UpsertAttribute
-	RemoveAttribute
-	InsertPermission
-	RemovePermission
+	CreateResource SyncMsgKind = iota
+	DeleteResource
+	CreateAttribute
+	UpdateAttribute
+	DeleteAttribute
+	CreateAggregationRel
+	DeleteAggregationRel
+	CreateCompositionRel
+	DeleteCompositionRel
+	CreatePermission
+	DeletePermission
 )
 
 type SyncMessage interface {

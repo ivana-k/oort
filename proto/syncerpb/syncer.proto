@@ -7,76 +7,98 @@ package syncerpb;
 import "common.proto";
 
 service SyncerService {
-  // ConnectResources forms a hierarchical relationship between the specified parent and child resources
-  // Additionally, if any of the resources weren't previously present, this rpc creates them
-  rpc ConnectResources(ConnectResourcesReq) returns (SyncResp) {}
-  // DisconnectResources removes a hierarchical relationship between the specified parent and child resources
-  // After removing the relationship, all orphan resources will also be removed
-  rpc DisconnectResources(DisconnectResourcesReq) returns (SyncResp) {}
-  // UpsertAttribute attaches a new attribute to the specified resource, or updates the value of the existing one
-  // Every attribute is uniquely identified by its name. Currently supported attributed types are:
-  // - int64
-  // - float64
-  // - bool
-  // - string
-  // All attribute values are serialized with the help of protobuf
-  rpc UpsertAttribute(UpsertAttributeReq) returns (SyncResp) {}
-  // RemoveAttribute removes an attribute by its name, from the specified resource
-  rpc RemoveAttribute(RemoveAttributeReq) returns (SyncResp) {}
-  // InsertPermission forms a permission relationship between subject (principal) and object (resource) resources
-  // Additionally, if any of the resources wasn't previously present, this rpc creates them
-  rpc InsertPermission(InsertPermissionReq) returns (SyncResp) {}
-  // RemovePermission removes a permission relationship between subject (principal) and object (resource) resources
-  // Permission's name and kind need to match in order to remove it
-  rpc RemovePermission(RemovePermissionReq) returns (SyncResp) {}
+  rpc CreateResource(CreateResourceReq) returns (SyncResp) {}
+  rpc DeleteResource(DeleteResourceReq) returns (SyncResp) {}
+  rpc CreateAggregationRel(CreateAggregationRelReq) returns (SyncResp) {}
+  rpc DeleteAggregationRel(DeleteAggregationRelReq) returns (SyncResp) {}
+  rpc CreateCompositionRel(CreateCompositionRelReq) returns (SyncResp) {}
+  rpc DeleteCompositionRel(DeleteCompositionRelReq) returns (SyncResp) {}
+  rpc CreateAttribute(CreateAttributeReq) returns (SyncResp) {}
+  rpc UpdateAttribute(UpdateAttributeReq) returns (SyncResp) {}
+  rpc DeleteAttribute(DeleteAttributeReq) returns (SyncResp) {}
+  rpc CreatePermission(CreatePermissionReq) returns (SyncResp) {}
+  rpc DeletePermission(DeletePermissionReq) returns (SyncResp) {}
 }
 
-message ConnectResourcesReq {
+message CreateResourceReq {
+  common.Resource resource = 1;
+  string id = 2;
+}
+
+message DeleteResourceReq {
+  common.Resource resource = 1;
+  string id = 2;
+}
+
+message CreateAggregationRelReq {
   common.Resource parent = 1;
   common.Resource child = 2;
   string id = 3;
 }
 
-message DisconnectResourcesReq {
+message DeleteAggregationRelReq {
   common.Resource parent = 1;
   common.Resource child = 2;
   string id = 3;
 }
 
-message UpsertAttributeReq {
+message CreateCompositionRelReq {
+  common.Resource parent = 1;
+  common.Resource child = 2;
+  string id = 3;
+}
+
+message DeleteCompositionRelReq {
+  common.Resource parent = 1;
+  common.Resource child = 2;
+  string id = 3;
+}
+
+message CreateAttributeReq {
   common.Resource resource = 1;
   common.Attribute attribute = 2;
   string id = 3;
 }
 
-message RemoveAttributeReq {
+message UpdateAttributeReq {
+  common.Resource resource = 1;
+  common.Attribute attribute = 2;
+  string id = 3;
+}
+
+message DeleteAttributeReq {
   common.Resource resource = 1;
   common.AttributeId attributeId = 2;
   string id = 3;
 }
 
-message InsertPermissionReq {
-  common.Resource principal = 1;
-  common.Resource resource = 2;
+message CreatePermissionReq {
+  common.Resource subject = 1;
+  common.Resource object = 2;
   common.Permission permission = 3;
   string id = 4;
 }
 
-message RemovePermissionReq {
-  common.Resource principal = 1;
-  common.Resource resource = 2;
+message DeletePermissionReq {
+  common.Resource subject = 1;
+  common.Resource object = 2;
   common.Permission permission = 3;
   string id = 4;
 }
 
 message SyncMessage {
   enum SyncKind {
-    CONNECT_RESOURCES = 0;
-    DISCONNECT_RESOURCES = 1;
-    UPSERT_ATTRIBUTE = 2;
-    REMOVE_ATTRIBUTE = 3;
-    INSERT_PERMISSION = 4;
-    REMOVE_PERMISSION = 5;
+      CreateResource = 0;
+      DeleteResource = 1;
+      CreateAttribute = 2;
+      UpdateAttribute = 3;
+      DeleteAttribute = 4;
+      CreateAggregationRel = 5;
+      DeleteAggregationRel = 6;
+      CreateCompositionRel = 7;
+      DeleteCompositionRel = 8;
+      CreatePermission = 9;
+      DeletePermission = 10;
   }
   SyncKind kind = 1;
   bytes payload = 2;

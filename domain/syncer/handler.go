@@ -17,10 +17,9 @@ func NewHandler(store acl.Store, syncRespFactory func(string, string, bool) *mod
 	}
 }
 
-func (h Handler) ConnectResources(req ConnectResourcesReq) SyncResp {
-	resp := h.store.ConnectResources(acl.ConnectResourcesReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
+func (h Handler) CreateResource(req CreateResourceReq) SyncResp {
+	resp := h.store.CreateResource(acl.CreateResourceReq{
+		Resource: req.Resource,
 		Callback: h.outboxMessageCallback(req),
 	})
 	return SyncResp{
@@ -28,10 +27,9 @@ func (h Handler) ConnectResources(req ConnectResourcesReq) SyncResp {
 	}
 }
 
-func (h Handler) DisconnectResources(req DisconnectResourcesReq) SyncResp {
-	resp := h.store.DisconnectResources(acl.DisconnectResourcesReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
+func (h Handler) DeleteResource(req DeleteResourceReq) SyncResp {
+	resp := h.store.DeleteResource(acl.DeleteResourceReq{
+		Resource: req.Resource,
 		Callback: h.outboxMessageCallback(req),
 	})
 	return SyncResp{
@@ -39,8 +37,8 @@ func (h Handler) DisconnectResources(req DisconnectResourcesReq) SyncResp {
 	}
 }
 
-func (h Handler) UpsertAttribute(req UpsertAttributeReq) SyncResp {
-	resp := h.store.UpsertAttribute(acl.UpsertAttributeReq{
+func (h Handler) CreateAttribute(req CreateAttributeReq) SyncResp {
+	resp := h.store.CreateAttribute(acl.CreateAttributeReq{
 		Resource:  req.Resource,
 		Attribute: req.Attribute,
 		Callback:  h.outboxMessageCallback(req),
@@ -50,8 +48,19 @@ func (h Handler) UpsertAttribute(req UpsertAttributeReq) SyncResp {
 	}
 }
 
-func (h Handler) RemoveAttribute(req RemoveAttributeReq) SyncResp {
-	resp := h.store.RemoveAttribute(acl.RemoveAttributeReq{
+func (h Handler) UpdateAttribute(req UpdateAttributeReq) SyncResp {
+	resp := h.store.UpdateAttribute(acl.UpdateAttributeReq{
+		Resource:  req.Resource,
+		Attribute: req.Attribute,
+		Callback:  h.outboxMessageCallback(req),
+	})
+	return SyncResp{
+		Error: resp.Error,
+	}
+}
+
+func (h Handler) DeleteAttribute(req DeleteAttributeReq) SyncResp {
+	resp := h.store.DeleteAttribute(acl.DeleteAttributeReq{
 		Resource:    req.Resource,
 		AttributeId: req.AttributeId,
 		Callback:    h.outboxMessageCallback(req),
@@ -61,10 +70,60 @@ func (h Handler) RemoveAttribute(req RemoveAttributeReq) SyncResp {
 	}
 }
 
-func (h Handler) InsertPermission(req InsertPermissionReq) SyncResp {
-	resp := h.store.InsertPermission(acl.InsertPermissionReq{
-		Principal:  req.Principal,
-		Resource:   req.Resource,
+func (h Handler) CreateAggregationRelReq(req CreateAggregationRelReq) SyncResp {
+	resp := h.store.CreateAggregationRel(acl.CreateAggregationRelReq{
+		Parent:   req.Parent,
+		Child:    req.Child,
+		Callback: h.outboxMessageCallback(req),
+	})
+	return SyncResp{
+		Error: resp.Error,
+	}
+}
+
+func (h Handler) DeleteAggregationRelReq(req DeleteAggregationRelReq) SyncResp {
+	resp := h.store.DeleteAggregationRel(acl.DeleteAggregationRelReq{
+		Parent:   req.Parent,
+		Child:    req.Child,
+		Callback: h.outboxMessageCallback(req),
+	})
+	return SyncResp{
+		Error: resp.Error,
+	}
+}
+
+func (h Handler) CreateCompositionRelReq(req CreateCompositionRelReq) SyncResp {
+	resp := h.store.CreateCompositionRel(acl.CreateCompositionRelReq{
+		Parent:   req.Parent,
+		Child:    req.Child,
+		Callback: h.outboxMessageCallback(req),
+	})
+	return SyncResp{
+		Error: resp.Error,
+	}
+}
+
+func (h Handler) DeleteCompositionRelReq(req DeleteCompositionRelReq) SyncResp {
+	resp := h.store.DeleteCompositionRel(acl.DeleteCompositionRelReq{
+		Parent:   req.Parent,
+		Child:    req.Child,
+		Callback: h.outboxMessageCallback(req),
+	})
+	return SyncResp{
+		Error: resp.Error,
+	}
+}
+
+func (h Handler) CreatePermission(req CreatePermissionReq) SyncResp {
+	if req.Subject == nil {
+		req.Subject = &model.RootResource
+	}
+	if req.Object == nil {
+		req.Object = &model.RootResource
+	}
+	resp := h.store.CreatePermission(acl.CreatePermissionReq{
+		Subject:    *req.Subject,
+		Object:     *req.Object,
 		Permission: req.Permission,
 		Callback:   h.outboxMessageCallback(req),
 	})
@@ -73,10 +132,16 @@ func (h Handler) InsertPermission(req InsertPermissionReq) SyncResp {
 	}
 }
 
-func (h Handler) RemovePermission(req RemovePermissionReq) SyncResp {
-	resp := h.store.RemovePermission(acl.RemovePermissionReq{
-		Principal:  req.Principal,
-		Resource:   req.Resource,
+func (h Handler) DeletePermission(req DeletePermissionReq) SyncResp {
+	if req.Subject == nil {
+		req.Subject = &model.RootResource
+	}
+	if req.Object == nil {
+		req.Object = &model.RootResource
+	}
+	resp := h.store.DeletePermission(acl.DeletePermissionReq{
+		Subject:    *req.Subject,
+		Object:     *req.Object,
 		Permission: req.Permission,
 		Callback:   h.outboxMessageCallback(req),
 	})

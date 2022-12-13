@@ -11,13 +11,11 @@ const (
 
 type AttributeId struct {
 	name string
-	kind AttributeKind
 }
 
-func NewAttributeId(name string, kind AttributeKind) AttributeId {
+func NewAttributeId(name string) AttributeId {
 	return AttributeId{
 		name: name,
-		kind: kind,
 	}
 }
 
@@ -25,18 +23,16 @@ func (attr AttributeId) Name() string {
 	return attr.name
 }
 
-func (attr AttributeId) Kind() AttributeKind {
-	return attr.kind
-}
-
 type Attribute struct {
 	id    AttributeId
+	kind  AttributeKind
 	value interface{}
 }
 
-func NewAttribute(id AttributeId, value interface{}) Attribute {
+func NewAttribute(id AttributeId, kind AttributeKind, value interface{}) Attribute {
 	return Attribute{
 		id:    id,
+		kind:  kind,
 		value: value,
 	}
 }
@@ -46,7 +42,7 @@ func (attr Attribute) Name() string {
 }
 
 func (attr Attribute) Kind() AttributeKind {
-	return attr.id.kind
+	return attr.kind
 }
 
 func (attr Attribute) Value() interface{} {

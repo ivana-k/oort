@@ -1,10 +1,8 @@
 package neo4j
 
 import (
-	"errors"
 	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/store/acl"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
 type AclStore struct {
@@ -17,199 +15,119 @@ func NewAclStore(manager *TransactionManager) acl.Store {
 	}
 }
 
-func (store AclStore) ConnectResources(req acl.ConnectResourcesReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(connectResourcesCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
-
-		return nil, result.Err()
-	})
+func (store AclStore) CreateResource(req acl.CreateResourceReq) acl.SyncResp {
+	cypher, params := createResourceCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) DisconnectResources(req acl.DisconnectResourcesReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(disconnectResourcesCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
-
-		return nil, result.Err()
-	})
+func (store AclStore) DeleteResource(req acl.DeleteResourceReq) acl.SyncResp {
+	cypher, params := deleteResourceCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
 func (store AclStore) GetResource(req acl.GetResourceReq) acl.GetResourceResp {
-	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(getResourceCypher(req))
-		if err != nil {
-			return nil, err
-		}
-		if result.Err() != nil {
-			return nil, result.Err()
-		}
-
-		if !result.Next() {
-			return nil, acl.ErrNotFound
-		}
-		return result.Record().Values[0], nil
-	})
-
+	cypher, params := getResourceCypher(req)
+	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
 		return acl.GetResourceResp{Resource: nil, Error: err}
 	}
+
+	results := records.([]interface{})[0].([]interface{})[0]
+
 	return acl.GetResourceResp{Resource: getResource(results), Error: nil}
 }
 
-func (store AclStore) UpsertAttribute(req acl.UpsertAttributeReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(upsertAttributeCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
-
-		return nil, result.Err()
-	})
+func (store AclStore) CreateAttribute(req acl.CreateAttributeReq) acl.SyncResp {
+	cypher, params := createAttributeCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) RemoveAttribute(req acl.RemoveAttributeReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(removeAttributeCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
+func (store AclStore) UpdateAttribute(req acl.UpdateAttributeReq) acl.SyncResp {
+	cypher, params := updateAttributeCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
+	return acl.SyncResp{Error: err}
+}
 
-		return nil, result.Err()
-	})
+func (store AclStore) DeleteAttribute(req acl.DeleteAttributeReq) acl.SyncResp {
+	cypher, params := deleteAttributeCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
 func (store AclStore) GetAttributes(req acl.GetAttributeReq) acl.GetAttributeResp {
-	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(getAttributeCypher(req))
-		if err != nil {
-			return nil, err
-		}
-		if result.Err() != nil {
-			return nil, result.Err()
-		}
-
-		records := make([]interface{}, 0)
-		for result.Next() {
-			records = append(records, result.Record().Values[0])
-		}
-		return records, nil
-	})
-
+	cypher, params := getAttributeCypher(req)
+	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
 		return acl.GetAttributeResp{Attributes: nil, Error: err}
 	}
+
+	results := make([]interface{}, 0)
+	for _, record := range records.([]interface{}) {
+		results = append(results, record.([]interface{})[0])
+	}
+
 	return acl.GetAttributeResp{Attributes: getAttributes(results), Error: nil}
 }
 
-func (store AclStore) InsertPermission(req acl.InsertPermissionReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(insertPermissionCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
-
-		return nil, result.Err()
-	})
+func (store AclStore) CreateAggregationRel(req acl.CreateAggregationRelReq) acl.SyncResp {
+	cypher, params := createAggregationRelCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) RemovePermission(req acl.RemovePermissionReq) acl.SyncResp {
-	_, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(removePermissionCypher(req))
-		outboxMessage := req.Callback(err)
-		if outboxMessage == nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
-		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
-
-		return nil, result.Err()
-	})
+func (store AclStore) DeleteAggregationRel(req acl.DeleteAggregationRelReq) acl.SyncResp {
+	cypher, params := deleteAggregationRelCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) GetPermissionByPrecedence(req acl.GetPermissionReq) acl.GetPermissionByPrecedenceResp {
-	results, err := store.manager.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		result, err := transaction.Run(getPermissionAndDistanceToPrincipal(req))
-		if err != nil {
-			return nil, err
-		}
-		if result.Err() != nil {
-			return nil, result.Err()
-		}
+func (store AclStore) CreateCompositionRel(req acl.CreateCompositionRelReq) acl.SyncResp {
+	cypher, params := createCompositionRelCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
+	return acl.SyncResp{Error: err}
+}
 
-		records := make([]interface{}, 0)
-		for result.Next() {
-			records = append(records, result.Record().Values)
-		}
-		return records, nil
-	})
+func (store AclStore) DeleteCompositionRel(req acl.DeleteCompositionRelReq) acl.SyncResp {
+	cypher, params := deleteCompositionRelCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
+	return acl.SyncResp{Error: err}
+}
 
+func (store AclStore) CreatePermission(req acl.CreatePermissionReq) acl.SyncResp {
+	cypher, params := createPermissionCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
+	return acl.SyncResp{Error: err}
+}
+
+func (store AclStore) DeletePermission(req acl.DeletePermissionReq) acl.SyncResp {
+	cypher, params := deletePermissionCypher(req)
+	err := store.manager.WriteTransaction(cypher, params, req.Callback)
+	return acl.SyncResp{Error: err}
+}
+
+func (store AclStore) GetPermissionHierarchy(req acl.GetPermissionHierarchyReq) acl.GetPermissionHierarchyResp {
+	cypher, params := getEffectivePermissionsWithPriorityCypher(req)
+	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
-		return acl.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
+		return acl.GetPermissionHierarchyResp{Hierarchy: nil, Error: err}
 	}
 
-	distMap := make(map[int]model.PermissionLevel)
-	for _, result := range results.([]interface{}) {
-		distance := int(result.([]interface{})[1].(int64))
-		_, ok := distMap[distance]
+	permsByPriority := make(map[int][]model.Permission)
+	for _, result := range records.([]interface{}) {
+		priority := int(result.([]interface{})[1].(int64))
+		_, ok := permsByPriority[priority]
 		if !ok {
-			distMap[distance] = make([]model.Permission, 0)
+			permsByPriority[priority] = make([]model.Permission, 0)
 		}
 		permission, err := getPermission(result.([]interface{})[0])
 		if err != nil {
-			return acl.GetPermissionByPrecedenceResp{Hierarchy: nil, Error: err}
+			return acl.GetPermissionHierarchyResp{Hierarchy: nil, Error: err}
 		}
-		distMap[distance] = append(distMap[distance], permission)
+		permsByPriority[priority] = append(permsByPriority[priority], permission)
 	}
 
-	return acl.GetPermissionByPrecedenceResp{Hierarchy: sortByDistanceAsc(distMap), Error: nil}
+	return acl.GetPermissionHierarchyResp{Hierarchy: getHierarchy(permsByPriority), Error: nil}
 }

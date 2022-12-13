@@ -31,20 +31,20 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		}
 	}
 
-	resp := h.store.GetPermissionByPrecedence(acl.GetPermissionReq{
-		Principal:      req.Principal,
-		Resource:       req.Resource,
+	resp := h.store.GetPermissionHierarchy(acl.GetPermissionHierarchyReq{
+		Subject:        req.Subject,
+		Object:         req.Object,
 		PermissionName: req.PermissionName,
 	})
 	if resp.Error != nil {
 		return errorResponse(resp.Error)
 	}
 
-	principalAttrs := h.getAttributes(req.Principal)
+	principalAttrs := h.getAttributes(req.Subject)
 	if principalAttrs.Error != nil {
 		return errorResponse(principalAttrs.Error)
 	}
-	resourceAttrs := h.getAttributes(req.Resource)
+	resourceAttrs := h.getAttributes(req.Object)
 	if resourceAttrs.Error != nil {
 		return errorResponse(resourceAttrs.Error)
 	}
@@ -93,8 +93,8 @@ func (h Handler) getAttributes(resource model.Resource) acl.GetAttributeResp {
 
 func checkRespCacheKey(req CheckPermissionReq) string {
 	return fmt.Sprintf("%s/%s/%s",
-		req.Principal.Id(),
-		req.Resource.Id(),
+		req.Subject.Id(),
+		req.Object.Id(),
 		req.PermissionName)
 }
 

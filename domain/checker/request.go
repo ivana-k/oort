@@ -3,8 +3,8 @@ package checker
 import "github.com/c12s/oort/domain/model"
 
 type CheckPermissionReq struct {
-	Principal,
-	Resource model.Resource
+	Subject,
+	Object model.Resource
 	PermissionName string
 	Env            []model.Attribute
 }

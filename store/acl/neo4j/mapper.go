@@ -2,7 +2,6 @@ package neo4j
 
 import (
 	"github.com/c12s/oort/domain/model"
-	"sort"
 )
 
 func getAttributes(cypherResults interface{}) []model.Attribute {
@@ -10,9 +9,8 @@ func getAttributes(cypherResults interface{}) []model.Attribute {
 	for _, result := range cypherResults.([]interface{}) {
 		attrMap := result.(map[string]interface{})
 		attr := model.NewAttribute(
-			model.NewAttributeId(
-				attrMap["name"].(string),
-				model.AttributeKind(attrMap["kind"].(int64))),
+			model.NewAttributeId(attrMap["name"].(string)),
+			model.AttributeKind(attrMap["kind"].(int64)),
 			attrMap["value"])
 		attributes = append(attributes, attr)
 	}
@@ -39,15 +37,10 @@ func getPermission(cypherResult interface{}) (model.Permission, error) {
 		*condition), nil
 }
 
-func sortByDistanceAsc(m map[int]model.PermissionLevel) model.PermissionHierarchy {
-	keys := make([]int, 0)
-	result := make(model.PermissionHierarchy, 0)
-	for key := range m {
-		keys = append(keys, key)
+func getHierarchy(levels map[int][]model.Permission) model.PermissionHierarchy {
+	hierarchy := make(model.PermissionHierarchy, 0)
+	for priority, permissions := range levels {
+		hierarchy[model.PermissionLevelPriority(priority)] = permissions
 	}
-	sort.Ints(keys)
-	for _, key := range keys {
-		result = append(result, m[key])
-	}
-	return result
+	return hierarchy
 }

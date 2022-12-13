@@ -1,5 +1,7 @@
 package model
 
+import "sort"
+
 type PermissionKind int
 
 const (
@@ -78,13 +80,29 @@ func (level PermissionLevel) eval(req PermissionEvalRequest) EvalResult {
 	return res
 }
 
-type PermissionHierarchy []PermissionLevel
+type PermissionLevelPriority int
+type PermissionHierarchy map[PermissionLevelPriority]PermissionLevel
 
 func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult {
-	for _, level := range hierarchy {
+	for _, level := range hierarchy.sortByPriorityDesc() {
 		if res := level.eval(req); res != EvalResultNonEvaluative {
 			return res
 		}
 	}
 	return DefaultEvalResult
+}
+
+func (hierarchy PermissionHierarchy) sortByPriorityDesc() []PermissionLevel {
+	keys := make([]PermissionLevelPriority, 0, len(hierarchy))
+	for k := range hierarchy {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+	levels := make([]PermissionLevel, 0, len(hierarchy))
+	for _, key := range keys {
+		levels = append(levels, hierarchy[key])
+	}
+	return levels
 }

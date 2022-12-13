@@ -25,8 +25,8 @@ func (s protoAttributeSerializer) Serialize(attributes []model.Attribute) ([]byt
 		protoAttribute := &common.Attribute{
 			Id: &common.AttributeId{
 				Name: attribute.Name(),
-				Kind: common.AttributeId_AttributeKind(attribute.Kind()),
 			},
+			Kind: common.Attribute_AttributeKind(attribute.Kind()),
 		}
 		switch attribute.Kind() {
 		case model.Int64:

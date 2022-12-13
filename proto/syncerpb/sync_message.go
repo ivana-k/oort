@@ -1,6 +1,7 @@
 package syncerpb
 
 import (
+	"errors"
 	"github.com/c12s/oort/domain/async"
 	"github.com/c12s/oort/domain/syncer"
 	"google.golang.org/protobuf/proto"
@@ -27,28 +28,48 @@ func (x *SyncMessage) Request() (syncer.Request, error) {
 	var request protoRequest
 	var err error
 	switch x.Kind {
-	case SyncMessage_CONNECT_RESOURCES:
-		req := &ConnectResourcesReq{}
+	case SyncMessage_CreateResource:
+		req := &CreateResourceReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_DISCONNECT_RESOURCES:
-		req := &DisconnectResourcesReq{}
+	case SyncMessage_DeleteResource:
+		req := &DeleteResourceReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_UPSERT_ATTRIBUTE:
-		req := &UpsertAttributeReq{}
+	case SyncMessage_CreateAttribute:
+		req := &CreateAttributeReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_REMOVE_ATTRIBUTE:
-		req := &RemoveAttributeReq{}
+	case SyncMessage_UpdateAttribute:
+		req := &UpdateAttributeReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_INSERT_PERMISSION:
-		req := &InsertPermissionReq{}
+	case SyncMessage_DeleteAttribute:
+		req := &DeleteAttributeReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_REMOVE_PERMISSION:
-		req := &RemovePermissionReq{}
+	case SyncMessage_CreateAggregationRel:
+		req := &CreateAggregationRelReq{}
+		err = proto.Unmarshal(x.Payload, req)
+		request = req
+	case SyncMessage_DeleteAggregationRel:
+		req := &DeleteAggregationRelReq{}
+		err = proto.Unmarshal(x.Payload, req)
+		request = req
+	case SyncMessage_CreateCompositionRel:
+		req := &CreateCompositionRelReq{}
+		err = proto.Unmarshal(x.Payload, req)
+		request = req
+	case SyncMessage_DeleteCompositionRel:
+		req := &DeleteCompositionRelReq{}
+		err = proto.Unmarshal(x.Payload, req)
+		request = req
+	case SyncMessage_CreatePermission:
+		req := &CreatePermissionReq{}
+		err = proto.Unmarshal(x.Payload, req)
+		request = req
+	case SyncMessage_DeletePermission:
+		req := &DeletePermissionReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
 	default:
@@ -56,6 +77,9 @@ func (x *SyncMessage) Request() (syncer.Request, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if request == nil {
+		return nil, errors.New("unknown msg kind")
 	}
 	return request.MapToDomain()
 }

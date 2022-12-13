@@ -1,5 +1,14 @@
 package model
 
+var (
+	RootResource = Resource{resourceId{"", "root"}}
+)
+
+const (
+	AggregateRelationship   = "A"
+	CompositionRelationship = "C"
+)
+
 type resourceId struct {
 	id   string
 	kind string
