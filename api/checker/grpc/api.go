@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/c12s/oort/domain/checker"
 	"github.com/c12s/oort/proto/checkerpb"
+	"log"
 )
 
 type CheckerGrpcApi struct {
@@ -19,5 +20,6 @@ func NewCheckerGrpcApi(handler checker.Handler) CheckerGrpcApi {
 
 func (c CheckerGrpcApi) CheckPermission(ctx context.Context, req *checkerpb.CheckPermissionReq) (*checkerpb.CheckResp, error) {
 	resp := c.handler.CheckPermission(req.MapToDomain())
+	log.Println(resp)
 	return &checkerpb.CheckResp{Allowed: resp.Allowed}, resp.Error
 }

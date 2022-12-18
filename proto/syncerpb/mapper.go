@@ -4,6 +4,7 @@ import (
 	"github.com/c12s/oort/domain/model"
 	"github.com/c12s/oort/domain/syncer"
 	"google.golang.org/protobuf/proto"
+	"log"
 )
 
 type protoRequest interface {
@@ -118,7 +119,7 @@ func (x *DeletePermissionReq) MapToDomain() (syncer.Request, error) {
 	}, nil
 }
 
-func NewSyncRespOutboxMessage(reqId string, error string, successful bool) *model.OutboxMessage {
+func NewSyncRespOutboxMessage(reqId string, error string, successful bool) model.OutboxMessage {
 	resp := AsyncSyncResp{
 		ReqId:      reqId,
 		Error:      error,
@@ -126,9 +127,10 @@ func NewSyncRespOutboxMessage(reqId string, error string, successful bool) *mode
 	}
 	payload, err := proto.Marshal(&resp)
 	if err != nil {
-		return nil
+		log.Println(err)
+		return model.OutboxMessage{}
 	}
-	return &model.OutboxMessage{
+	return model.OutboxMessage{
 		Kind:    model.SyncRespOutboxMessageKind,
 		Payload: payload,
 	}

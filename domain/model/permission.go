@@ -80,10 +80,10 @@ func (level PermissionLevel) eval(req PermissionEvalRequest) EvalResult {
 	return res
 }
 
-type PermissionLevelPriority int
-type PermissionHierarchy map[PermissionLevelPriority]PermissionLevel
+type PermissionPriority int
+type PermissionObjHierarchy map[PermissionPriority]PermissionLevel
 
-func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult {
+func (hierarchy PermissionObjHierarchy) eval(req PermissionEvalRequest) EvalResult {
 	for _, level := range hierarchy.sortByPriorityDesc() {
 		if res := level.eval(req); res != EvalResultNonEvaluative {
 			return res
@@ -92,8 +92,8 @@ func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult 
 	return DefaultEvalResult
 }
 
-func (hierarchy PermissionHierarchy) sortByPriorityDesc() []PermissionLevel {
-	keys := make([]PermissionLevelPriority, 0, len(hierarchy))
+func (hierarchy PermissionObjHierarchy) sortByPriorityDesc() []PermissionLevel {
+	keys := make([]PermissionPriority, 0, len(hierarchy))
 	for k := range hierarchy {
 		keys = append(keys, k)
 	}
@@ -101,6 +101,32 @@ func (hierarchy PermissionHierarchy) sortByPriorityDesc() []PermissionLevel {
 		return keys[i] > keys[j]
 	})
 	levels := make([]PermissionLevel, 0, len(hierarchy))
+	for _, key := range keys {
+		levels = append(levels, hierarchy[key])
+	}
+	return levels
+}
+
+type PermissionHierarchy map[PermissionPriority]PermissionObjHierarchy
+
+func (hierarchy PermissionHierarchy) Eval(req PermissionEvalRequest) EvalResult {
+	for _, objHierarchy := range hierarchy.sortByPriorityDesc() {
+		if res := objHierarchy.eval(req); res != EvalResultNonEvaluative {
+			return res
+		}
+	}
+	return DefaultEvalResult
+}
+
+func (hierarchy PermissionHierarchy) sortByPriorityDesc() []PermissionObjHierarchy {
+	keys := make([]PermissionPriority, 0, len(hierarchy))
+	for k := range hierarchy {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+	levels := make([]PermissionObjHierarchy, 0, len(hierarchy))
 	for _, key := range keys {
 		levels = append(levels, hierarchy[key])
 	}

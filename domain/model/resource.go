@@ -1,12 +1,12 @@
 package model
 
 var (
-	RootResource = Resource{resourceId{"", "root"}}
+	RootResource = Resource{resourceId{"", "root"}, nil}
 )
 
 const (
-	AggregateRelationship   = "A"
-	CompositionRelationship = "C"
+	AggregateRelationship   = "Aggregation"
+	CompositionRelationship = "Composition"
 )
 
 type resourceId struct {
@@ -15,7 +15,8 @@ type resourceId struct {
 }
 
 type Resource struct {
-	id resourceId
+	id         resourceId
+	Attributes []Attribute
 }
 
 func NewResource(id, kind string) Resource {
@@ -31,6 +32,18 @@ func (r Resource) Id() string {
 	return r.id.id
 }
 
+func (r Resource) SetId(id string) {
+	r.id.id = id
+}
+
 func (r Resource) Kind() string {
 	return r.id.kind
+}
+
+func (r Resource) SetKind(kind string) {
+	r.id.kind = kind
+}
+
+func (r Resource) Name() string {
+	return r.id.kind + r.id.id
 }

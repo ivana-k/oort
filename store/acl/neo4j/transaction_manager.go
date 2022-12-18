@@ -25,21 +25,47 @@ func NewTransactionManager(uri, dbName string) (*TransactionManager, error) {
 
 type TransactionFunction func(transaction neo4j.Transaction) (interface{}, error)
 
-func (manager *TransactionManager) WriteTransaction(cypher string, params map[string]interface{}, callback func(error) *model.OutboxMessage) error {
+func (manager *TransactionManager) WriteTransaction(cypher string, params map[string]interface{}, callback func(error) model.OutboxMessage) error {
 	_, err := manager.writeTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		result, err := transaction.Run(cypher, params)
-		outboxMessage := callback(err)
-		if outboxMessage == nil {
+		if err != nil {
 			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be created")
 		}
-		_, err = transaction.Run(getOutboxMessageCypher(*outboxMessage))
+		outboxMessage := callback(err)
+		_, err = transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
 		if err != nil {
 			_ = transaction.Rollback()
 			return nil, errors.New("outbox message could not be stored - " + err.Error())
 		}
-
 		return nil, result.Err()
+	})
+	return err
+}
+
+func (manager *TransactionManager) WriteTransactions(cyphers []string, params []map[string]interface{}, callback func(error) model.OutboxMessage) error {
+	_, err := manager.writeTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		var txErr error = nil
+		for i := range cyphers {
+			cypher := cyphers[i]
+			param := params[i]
+			result, err := transaction.Run(cypher, param)
+			if err != nil || result.Err() != nil {
+				_ = transaction.Rollback()
+				if err != nil {
+					txErr = err
+				} else {
+					txErr = result.Err()
+				}
+				break
+			}
+		}
+		outboxMessage := callback(txErr)
+		result, err := transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
+		if err != nil || result.Err() != nil {
+			_ = transaction.Rollback()
+			return nil, errors.New("outbox message could not be stored - " + err.Error())
+		}
+		return txErr, nil
 	})
 	return err
 }
@@ -105,4 +131,11 @@ func (manager *TransactionManager) Stop() {
 	if err != nil {
 		log.Println("error while closing neo4j conn: ", err)
 	}
+}
+
+func (manager *TransactionManager) getOutboxMessageCypher(message model.OutboxMessage) (string, map[string]interface{}) {
+	return "CREATE (:OutboxMessage{kind: $kind, payload: $payload, processing: $processing})",
+		map[string]interface{}{"kind": message.Kind,
+			"payload":    message.Payload,
+			"processing": false}
 }

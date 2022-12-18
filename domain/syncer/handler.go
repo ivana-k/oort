@@ -7,10 +7,10 @@ import (
 
 type Handler struct {
 	store           acl.Store
-	syncRespFactory func(string, string, bool) *model.OutboxMessage
+	syncRespFactory func(string, string, bool) model.OutboxMessage
 }
 
-func NewHandler(store acl.Store, syncRespFactory func(string, string, bool) *model.OutboxMessage) Handler {
+func NewHandler(store acl.Store, syncRespFactory func(string, string, bool) model.OutboxMessage) Handler {
 	return Handler{
 		store:           store,
 		syncRespFactory: syncRespFactory,
@@ -150,8 +150,8 @@ func (h Handler) DeletePermission(req DeletePermissionReq) SyncResp {
 	}
 }
 
-func (h Handler) outboxMessageCallback(req Request) func(error) *model.OutboxMessage {
-	return func(err error) *model.OutboxMessage {
+func (h Handler) outboxMessageCallback(req Request) func(error) model.OutboxMessage {
+	return func(err error) model.OutboxMessage {
 		if err != nil {
 			return h.syncRespFactory(req.Id(), err.Error(), false)
 		}

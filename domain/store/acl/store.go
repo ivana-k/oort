@@ -7,7 +7,6 @@ type Store interface {
 	CreateAttribute(req CreateAttributeReq) SyncResp
 	UpdateAttribute(req UpdateAttributeReq) SyncResp
 	DeleteAttribute(req DeleteAttributeReq) SyncResp
-	GetAttributes(req GetAttributeReq) GetAttributeResp
 	CreateAggregationRel(req CreateAggregationRelReq) SyncResp
 	DeleteAggregationRel(req DeleteAggregationRelReq) SyncResp
 	CreateCompositionRel(req CreateCompositionRelReq) SyncResp
