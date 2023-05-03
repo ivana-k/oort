@@ -65,26 +65,11 @@ CALL {
     MATCH (r)-[:Has|On]-(p:Permission)
     DETACH DELETE p
 }
-// nadji sve resurse koje treba povezati sa root-om (prvi nivo)
-CALL {
-    WITH delRes
-    MATCH (p:Resource)-[:Includes]->(c:Resource)
-    WHERE p IN delRes AND NOT c IN delRes AND NOT EXISTS
-        {((c)<-[:Includes]-(op:Resource)) WHERE NOT (op IN delRes)}
-    RETURN collect(DISTINCT c) AS rootRes
-}
 // obrisi resurse
 CALL {
     WITH delRes
     UNWIND delRes AS r
     DETACH DELETE r
-}
-// povezati resurse sa root-om
-CALL {
-    WITH rootRes
-    MATCH (root:Resource{name: $rootName})
-    UNWIND rootRes AS rr
-    CREATE (root)-[:Includes{kind: $composition}]->(rr)
 }
 `
 
@@ -158,13 +143,6 @@ MATCH (parent:Resource{name: $parentName})
 MATCH (child:Resource{name: $childName})
 WHERE NOT (parent)-[:Includes]->(child) AND NOT (child)-[:Includes*]->(parent)
 CREATE (parent)-[:Includes{kind: $relKind}]->(child)
-WITH child
-// RASKIDANJE VEZE SA ROOT-OM
-CALL {
-    WITH child
-    MATCH (child)<-[rootRel:Includes{kind: $composition}]-(root:Resource{name: $rootName})
-    DELETE rootRel
-}
 `
 
 func (f nonCachedPermissionsCypherFactory) createAggregationRelCypher(req acl.CreateAggregationRelReq) (string, map[string]interface{}) {
@@ -180,19 +158,7 @@ func (f nonCachedPermissionsCypherFactory) createAggregationRelCypher(req acl.Cr
 const ncDeleteRelQuery = `
 MATCH (parent:Resource{name: $parentName})-[includes:Includes{kind: $relKind}]->(child:Resource{name: $childName})
 WITH parent, child, includes
-// obrisi vezu izmedju roditelja i deteta
-CALL {
-    WITH includes
-    DELETE includes
-}
-// povezi child sa root-om ako nema drugih roditelja
-CALL {
-    WITH child
-    MATCH (c)
-    WHERE c = child AND  NOT (child)<-[:Includes]-()
-    MATCH (root:Resource{name: $rootName})
-    CREATE (root)-[:Includes{kind: $composition}]->(child)
-}
+DELETE includes
 `
 
 func (f nonCachedPermissionsCypherFactory) deleteAggregationRelCypher(req acl.DeleteAggregationRelReq) (string, map[string]interface{}) {
@@ -262,9 +228,22 @@ const ncGetPermissionsQuery = `
 OPTIONAL MATCH (sub:Resource{name: $subName})<-[:Includes*0..]-(subParent:Resource)-[:Has]->
 (p:Permission{name: $permName})-[:On]->(objParent:Resource)-[:Includes*0..]->(obj:Resource{name: $objName})
 WHERE sub IS NOT null AND obj IS NOT null AND p IS NOT null
-MATCH subPath=shortestPath((sub)<-[:Includes*0..10]-(subParent))
-MATCH objPath=shortestPath((obj)<-[:Includes*0..10]-(objParent))
-RETURN p.name, p.kind, p.condition, -length(subPath), -length(objPath)
+WITH p, sub, subParent, obj, objParent
+CALL {
+	WITH sub, subParent
+	MATCH path=(sub)<-[:Includes*0..100]-(subParent)
+	RETURN -length(path) AS subPriority
+	ORDER BY subPriority ASC
+	LIMIT 1
+}
+CALL {
+	WITH obj, objParent
+	MATCH path=(obj)<-[:Includes*0..100]-(objParent)
+	RETURN -length(path) AS objPriority
+	ORDER BY objPriority ASC
+	LIMIT 1
+}
+RETURN p.name, p.kind, p.condition, subPriority, objPriority
 `
 
 func (f nonCachedPermissionsCypherFactory) getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
@@ -330,70 +309,36 @@ CALL {
     MATCH (r)-[:Has|On{priority: 0}]-(p:Permission{})
     DETACH DELETE p
 }
-// nadji sve resurse kojima treba obrisati dozvole (prvi nivo)
+// nadji sve resurse kojima treba ukloniti dozvole
 CALL {
     WITH delRes
-    MATCH (p:Resource)-[:Includes]->(c:Resource)
+    MATCH (p:Resource)-[:Includes*]->(c:Resource)
     WHERE p IN delRes AND NOT c IN delRes
-    RETURN collect({parent: p, child: c}) AS permRes
-}
-// nadji sve resurse koje treba povezati sa root-om (prvi nivo)
-CALL {
-    WITH delRes
-    MATCH (p:Resource)-[:Includes]->(c:Resource)
-    WHERE p IN delRes AND NOT c IN delRes AND NOT EXISTS
-        {((c)<-[:Includes]-(op:Resource)) WHERE NOT (op IN delRes)}
-    RETURN collect(DISTINCT c) AS rootRes
-}
-MATCH (root:Resource{name: $rootName})
-WITH *
-// // nadji sve root dozvole (subjekat)
-CALL {
-    MATCH (root)-[rel:Has]->(p:Permission)
-    RETURN collect({priority: rel.priority, permission: p}) AS sRootPerms
-}
-// // nadji sve root dozvole (objekat)
-CALL {
-    MATCH (root)<-[rel:On]-(p:Permission)
-    RETURN collect({priority: rel.priority, permission: p}) AS oRootPerms
+    RETURN collect(p) AS permRes
 }
 // ukloni nasledjene dozvole iz potomaka
 CALL {
-    WITH permRes
-    UNWIND permRes AS pr
-    WITH pr.parent AS parent, pr.child AS child
-    // nadji potomke trenutnog resursa (ukljucen i sam resurs)
+    WITH permRes, delRes
+    UNWIND permRes AS res
+    // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - subjekat
     CALL {
-        WITH child
-        OPTIONAL MATCH path=(child)-[:Includes*]->(d:Resource)
-        RETURN collect({resource: d, distance: length(path) + 1}) AS descendants
-        UNION
-        WITH child
-        MATCH (c)
-        WHERE c = child
-        RETURN collect({resource: c, distance: 1}) AS descendants
+      WITH res, delRes
+      MATCH path=(res)<-[:Includes*]-(parent:Resource)-[:Has{priority: 0}]->(perm:Permission)
+      WHERE ANY(pathRes IN NODES(path) WHERE pathRes IN delRes)
+      MATCH ((res)-[srel:Has{priority: -(length(path)-1)}]->(perm))
+      WITH collect(srel) AS del
+      UNWIND del[..1] AS d
+      DELETE d
     }
-    // obrisi dozvole iz potomaka (subjekat)
+    // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - objekat
     CALL {
-        WITH descendants, parent
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, parent
-        MATCH (parent)-[psrel:Has]->(p:Permission)
-        MATCH (r)-[dsrel:Has{priority: psrel.priority - dist}]->(p)
-        WITH dsrel.priority as priority, collect(dsrel) AS del
-        UNWIND del[..1] AS d
-        DELETE d
-    }
-    // obrisi dozvole iz potomaka (objekat)
-    CALL {
-        WITH descendants, parent
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, parent
-        MATCH (parent)<-[psrel:On]-(p:Permission)
-        MATCH (r)<-[dsrel:On{priority: psrel.priority - dist}]-(p)
-        WITH dsrel.priority as priority, collect(dsrel) AS del
-        UNWIND del[..1] AS d
-        DELETE d
+      WITH res, delRes
+      MATCH path=(res)<-[:Includes*]-(parent:Resource)<-[:On{priority: 0}]-(perm:Permission)
+      WHERE ANY(pathRes IN NODES(path) WHERE pathRes IN delRes)
+      MATCH ((res)<-[orel:On{priority: -(length(path)-1)}]-(perm))
+      WITH collect(orel) AS del
+      UNWIND del[..1] AS d
+      DELETE d
     }
 }
 // obrisi resurse
@@ -401,42 +346,6 @@ CALL {
     WITH delRes
     UNWIND delRes AS r
     DETACH DELETE r
-}
-// povezati resurse sa root-om
-// i njima i svim njihovim potomcima dodeliti dozvole
-CALL {
-    WITH rootRes, sRootPerms, oRootPerms, root
-    UNWIND rootRes AS rr
-    CREATE (root)-[:Includes{kind: $composition}]->(rr)
-    WITH rr, sRootPerms, oRootPerms, root
-    // nadji potomke trenutnog resursa (ukljucen i sam resurs)
-    CALL {
-        WITH rr
-        WITH rr AS child
-        MATCH path=(child)-[:Includes*]->(d:Resource)
-        RETURN collect({resource: d, distance: length(path) + 1}) AS descendants
-        UNION
-        MATCH (child)
-        RETURN collect({resource: child, distance: 1}) AS descendants
-    }
-   // dodeli potomcima root dozvole (sa strane subjekta)
-    CALL {
-        WITH descendants, sRootPerms
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, sRootPerms
-        UNWIND sRootPerms AS rp
-        WITH rp.priority AS priority, rp.permission AS p, r, dist
-        CREATE (r)-[:Has{priority: priority - dist}]->(p)
-    }
-   // dodeli potomcima root dozvole (sa strane objekta)
-    CALL {
-        WITH descendants, oRootPerms
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, oRootPerms
-        UNWIND oRootPerms AS rp
-        WITH rp.priority AS priority, rp.permission AS p, r, dist
-        CREATE (r)<-[:On{priority: priority - dist}]-(p)
-    }
 }
 `
 
@@ -509,70 +418,35 @@ const cCreateRelQuery = `
 MATCH (parent:Resource{name: $parentName})
 MATCH (child:Resource{name: $childName})
 WHERE NOT (parent)-[:Includes]->(child) AND NOT (child)-[:Includes*]->(parent)
-CREATE (parent)-[:Includes{kind: $relKind}]->(child)
+// kreiraj novy vezu
+CREATE (parent)-[newRel:Includes{kind: $relKind}]->(child)
 // nadji sve dozvole koje treba da se naslede
-WITH parent, child
+WITH parent, newRel
 CALL {
     WITH parent
     MATCH (parent)-[srel:Has|On]-(p:Permission)
     RETURN collect({priority: srel.priority, type: type(srel), permission: p}) AS rels
 }
-// nadji potomke
+// nadji nove putanje od roditelja do potomaka
 CALL {
-    WITH child
-    MATCH path=(child)-[:Includes*]->(d:Resource)
-    RETURN collect({resource: d, distance: length(path) + 1}) + collect({resource: child, distance: 1}) AS descendants
+    WITH parent, newRel
+    MATCH path=(parent)-[:Includes*]->(d:Resource)
+    WHERE newRel in RELATIONSHIPS(path)
+    RETURN collect(path) AS newPaths
 }
-//  dodeli dozvole potomcima
+//  dodeli dozvole potomcima na novim putanjama
 CALL {
-    WITH descendants, rels
-    UNWIND descendants AS d
-    WITH d.resource AS r, d.distance AS dist, rels
-    UNWIND rels AS rel
-    WITH rel.priority AS priority, rel.type AS type, r.permission AS p, r, dist
+    WITH newPaths, rels
+    UNWIND newPaths AS newPath
+    WITH last(nodes(newPath)) AS res, length(newPath) AS dist, rels AS policies
+    UNWIND policies AS policy
+    WITH policy.priority AS priority, policy.type AS type, policy.permission AS policy, res, dist
     FOREACH (i in CASE WHEN type = "Has" THEN [1] ELSE [] END |
-        CREATE (r)-[:Has{priority: priority - dist}]->(p)
+        CREATE (res)-[:Has{priority: priority - dist}]->(policy)
     )
     FOREACH (i in CASE WHEN type = "On" THEN [1] ELSE [] END |
-        CREATE (r)<-[:On{priority: priority - dist}]-(p)
+        CREATE (res)<-[:On{priority: priority - dist}]-(policy)
     )
-}
-// RASKIDANJE VEZE SA ROOT-OM
-CALL {
-    WITH *
-    MATCH (child)<-[rootRel:Includes{kind: $composition}]-(root:Resource{name: $rootName})
-    DELETE rootRel
-    WITH *
-    // nadji sve root dozvole koje treba da se uklone
-    CALL {
-        WITH root
-        MATCH (root)-[srel:Has|On]-(p:Permission)
-        RETURN collect({priority: srel.priority, type: type(srel), permission: p}) AS rootRels
-    }
-    CALL {
-        WITH descendants, rootRels
-        WITH descendants, rootRels AS rels
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, rels
-        UNWIND rels AS rel
-        WITH rel.priority AS priority, rel.type AS type, r.permission AS p, r, dist
-        CALL {
-            WITH r, priority, dist, p, type
-            MATCH (r)-[dsrel:Has{priority: priority - dist}]->(p)
-            WHERE type(dsrel) = type
-            WITH dsrel.priority as priority, collect(dsrel) AS del
-            UNWIND del[..1] AS d
-            DELETE d
-        }
-        CALL {
-            WITH r, priority, dist, p, type
-            MATCH (r)<-[dsrel:On{priority: priority - dist}]-(p)
-            WHERE type(dsrel) = type
-            WITH dsrel.priority as priority, collect(dsrel) AS del
-            UNWIND del[..1] AS d
-            DELETE d
-        }
-    }
 }
 `
 
@@ -588,7 +462,7 @@ func (f cachedPermissionsCypherFactory) createAggregationRelCypher(req acl.Creat
 
 const cDeleteRelQuery = `
 MATCH (parent:Resource{name: $parentName})-[includes:Includes{kind: $relKind}]->(child:Resource{name: $childName})
-WITH parent, child, includes
+WITH parent, includes
 // nadji sve dozvole koje ima roditelj (kao subjekat)
 CALL {
     WITH parent
@@ -601,38 +475,35 @@ CALL {
     MATCH (parent)<-[rel:On]-(p:Permission)
     RETURN collect({permission: p, priority: rel.priority}) AS objPermissions
 }
-// pronadji potomke deteta i njihovu udaljenost od roditelja
-// i spoji sa detetom i njegovom udaljenoscu od roditelja
+// pronadji sve putanje od roditelja koje ce biti prekinute
 CALL {
-    WITH child
-    MATCH path=(child)-[:Includes*]->(d:Resource)
-    RETURN collect({resource: d, distance: length(path) + 1}) + collect({resource: child, distance: 1}) AS descendants
+    WITH parent, includes
+    MATCH path=(parent)-[:Includes*]->(d:Resource)
+    WHERE includes IN RELATIONSHIPS(path)
+    RETURN collect(path) AS oldPaths
 }
 // obrisi sve nasledjene dozvole
-// iz deteta i njegovih potomaka
 CALL {
-    WITH parent, child, subPermissions, objPermissions, descendants
-    // obrisi iz potomaka (sa strane subjekta)
+    WITH parent, subPermissions, objPermissions, oldPaths
     CALL {
-        WITH parent, subPermissions, descendants
-        UNWIND descendants AS d
-        WITH d.resource AS child, d.distance AS dist, subPermissions
-        UNWIND subPermissions AS prel
-        WITH prel.priority AS priority, prel.permission AS permission, child, dist
-        MATCH (child)-[crel:Has{priority: priority - dist}]->(permission)
-        WITH crel.priority as priority, collect(crel) AS del
+        WITH parent, subPermissions, oldPaths
+        UNWIND oldPaths AS oldPath
+        WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, subPermissions
+        UNWIND subPermissions AS policy
+        WITH policy.priority AS priority, policy.permission AS permission, res, dist
+        MATCH (res)-[rrel:Has{priority: priority - dist}]->(permission)
+        WITH permission, rrel.priority as priority, collect(rrel) AS del
         UNWIND del[..1] AS d
         DELETE d
     }
-    // obrisi iz potomaka (sa strane objekta)
     CALL {
-        WITH parent, objPermissions, descendants
-        UNWIND descendants AS d
-        WITH d.resource AS child, d.distance AS dist, objPermissions
-        UNWIND objPermissions AS prel
-        WITH prel.priority AS priority, prel.permission AS permission, child, dist
-        MATCH (child)<-[crel:On{priority: priority - dist}]-(permission)
-        WITH crel.priority as priority, collect(crel) AS del
+        WITH parent, objPermissions, oldPaths
+        UNWIND oldPaths AS oldPath
+        WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, objPermissions
+        UNWIND objPermissions AS policy
+        WITH policy.priority AS priority, policy.permission AS permission, res, dist
+        MATCH (res)<-[rrel:On{priority: priority - dist}]-(permission)
+        WITH permission, rrel.priority as priority, collect(rrel) AS del
         UNWIND del[..1] AS d
         DELETE d
     }
@@ -641,32 +512,6 @@ CALL {
 CALL {
     WITH includes
     DELETE includes
-}
-// povezi child sa root-om ako nema drugih roditelja
-// i dodeli njemu i njegovim potomcima root dozvole
-CALL {
-    WITH child, descendants
-    MATCH (child)
-    WHERE NOT (child)<-[:Includes]-()
-    MATCH (root:Resource{name: $rootName})
-    CREATE (root)-[:Includes{kind: $composition}]->(child)
-    WITH child, root, descendants
-    // dodeli potomcima root dozvole (sa strane subjekta)
-    CALL {
-        WITH descendants, root
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, root
-        MATCH (root)-[srel:Has]->(p:Permission)
-        MERGE (r)-[:Has{priority: srel.prioriy - dist}]->(p)
-    }
-    // dodeli potomcima root dozvole (sa strane objekta)
-    CALL {
-        WITH descendants, root
-        UNWIND descendants AS d
-        WITH d.resource AS r, d.distance AS dist, root
-        MATCH (root)<-[srel:On]-(p:Permission)
-        MERGE (r)<-[:On{priority: srel.prioriy - dist}]->(p)
-    }
 }
 `
 
@@ -748,7 +593,8 @@ const cGetPermissionsQuery = `
 MATCH (sub:Resource{name: $subName})
 MATCH (obj:Resource{name: $objName})
 MATCH (sub)-[srel:Has]->(p:Permission{name: $permName})-[orel:On]->(obj)
-RETURN p.name, p.kind, p.condition, srel.priority, orel.priority
+WITH p, min(srel.priority) AS spriority, min(orel.priority) AS opriority
+RETURN p.name, p.kind, p.condition, spriority, opriority
 `
 
 func (f cachedPermissionsCypherFactory) getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
