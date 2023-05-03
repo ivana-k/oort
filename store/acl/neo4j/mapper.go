@@ -2,7 +2,9 @@ package neo4j
 
 import (
 	"errors"
+	"fmt"
 	"github.com/c12s/oort/domain/model"
+	"log"
 )
 
 func getResource(cypherResult interface{}) *model.Resource {
@@ -54,6 +56,7 @@ func getHierarchy(cypherResult interface{}) (model.PermissionHierarchy, error) {
 		}
 		subPriorityInt, ok := recordElems[3].(int64)
 		if !ok {
+			log.Println(fmt.Sprintf("%T", recordElems[3]))
 			return model.PermissionHierarchy{}, errors.New("invalid record elem type - perm sub priority")
 		}
 		subPriority := model.PermissionPriority(subPriorityInt)

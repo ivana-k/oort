@@ -158,6 +158,7 @@ MATCH (parent:Resource{name: $parentName})
 MATCH (child:Resource{name: $childName})
 WHERE NOT (parent)-[:Includes]->(child) AND NOT (child)-[:Includes*]->(parent)
 CREATE (parent)-[:Includes{kind: $relKind}]->(child)
+WITH child
 // RASKIDANJE VEZE SA ROOT-OM
 CALL {
     WITH child

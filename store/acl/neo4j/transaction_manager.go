@@ -31,6 +31,9 @@ func (manager *TransactionManager) WriteTransaction(cypher string, params map[st
 		if err != nil {
 			_ = transaction.Rollback()
 		}
+		if callback == nil {
+			return nil, nil
+		}
 		outboxMessage := callback(err)
 		_, err = transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
 		if err != nil {
@@ -58,6 +61,9 @@ func (manager *TransactionManager) WriteTransactions(cyphers []string, params []
 				}
 				break
 			}
+		}
+		if callback == nil {
+			return nil, nil
 		}
 		outboxMessage := callback(txErr)
 		result, err := transaction.Run(manager.getOutboxMessageCypher(outboxMessage))

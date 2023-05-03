@@ -3,8 +3,11 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/c12s/oort/domain/store/acl"
+	neo4jstore "github.com/c12s/oort/store/acl/neo4j"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"log"
 )
 
 const (
@@ -54,4 +57,53 @@ func setupNeo4jContainer(ctx context.Context) (*neo4jContainer, error) {
 	uri := fmt.Sprintf("bolt://%s:%s", ip, mappedPort)
 
 	return &neo4jContainer{Container: container, uri: uri, dbName: "neo4j"}, nil
+}
+
+func setUpAclStoreNoCaching(aclStore *acl.Store, txManager *neo4jstore.TransactionManager) error {
+	if aclStore != nil {
+	}
+	//c, err := setupNeo4jContainer(context.Background())
+	//if err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+	//log.Println(c.uri)
+	//log.Println(c.dbName)
+	txManager, err := neo4jstore.NewTransactionManager("bolt://localhost:7687/tcp", "neo4j")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	*aclStore = neo4jstore.NewAclStore(txManager, neo4jstore.NewNonCachedPermissionsCypherFactory())
+	return nil
+}
+
+func setUpAclStoreCaching(aclStore *acl.Store, txManager *neo4jstore.TransactionManager) error {
+	if aclStore != nil {
+	}
+	//c, err := setupNeo4jContainer(context.Background())
+	//if err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+	//log.Println(c.uri)
+	//log.Println(c.dbName)
+	txManager, err := neo4jstore.NewTransactionManager("bolt://localhost:7687/tcp", "neo4j")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	*aclStore = neo4jstore.NewAclStore(txManager, neo4jstore.NewCachedPermissionsCypherFactory())
+	return nil
+}
+
+func cleanUpAclStore(txManager *neo4jstore.TransactionManager) error {
+	if txManager == nil {
+		return nil
+	}
+
+	cypher := "MATCH (n) DETACH DELETE n"
+	return txManager.WriteTransaction(cypher, nil, nil)
 }
