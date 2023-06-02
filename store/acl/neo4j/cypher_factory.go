@@ -157,7 +157,6 @@ func (f nonCachedPermissionsCypherFactory) createAggregationRelCypher(req acl.Cr
 
 const ncDeleteRelQuery = `
 MATCH (parent:Resource{name: $parentName})-[includes:Includes{kind: $relKind}]->(child:Resource{name: $childName})
-WITH parent, child, includes
 DELETE includes
 `
 
