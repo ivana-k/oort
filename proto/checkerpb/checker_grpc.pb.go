@@ -22,6 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CheckerServiceClient interface {
+	// CheckPermission checks if principal is allowed to perform action specified by the permission name, on the resource
+	// Additionally, all environment attributes need to be provided as part of the request
 	CheckPermission(ctx context.Context, in *CheckPermissionReq, opts ...grpc.CallOption) (*CheckResp, error)
 }
 
@@ -46,6 +48,8 @@ func (c *checkerServiceClient) CheckPermission(ctx context.Context, in *CheckPer
 // All implementations must embed UnimplementedCheckerServiceServer
 // for forward compatibility
 type CheckerServiceServer interface {
+	// CheckPermission checks if principal is allowed to perform action specified by the permission name, on the resource
+	// Additionally, all environment attributes need to be provided as part of the request
 	CheckPermission(context.Context, *CheckPermissionReq) (*CheckResp, error)
 	mustEmbedUnimplementedCheckerServiceServer()
 }

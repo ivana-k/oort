@@ -1,13 +1,17 @@
 package acl
 
 type Store interface {
-	ConnectResources(req ConnectResourcesReq) SyncResp
-	DisconnectResources(req DisconnectResourcesReq) SyncResp
+	CreateResource(req CreateResourceReq) SyncResp
+	DeleteResource(req DeleteResourceReq) SyncResp
 	GetResource(req GetResourceReq) GetResourceResp
-	UpsertAttribute(req UpsertAttributeReq) SyncResp
-	RemoveAttribute(req RemoveAttributeReq) SyncResp
-	GetAttributes(req GetAttributeReq) GetAttributeResp
-	InsertPermission(req InsertPermissionReq) SyncResp
-	RemovePermission(req RemovePermissionReq) SyncResp
-	GetPermissionByPrecedence(req GetPermissionReq) GetPermissionByPrecedenceResp
+	CreateAttribute(req CreateAttributeReq) SyncResp
+	UpdateAttribute(req UpdateAttributeReq) SyncResp
+	DeleteAttribute(req DeleteAttributeReq) SyncResp
+	CreateAggregationRel(req CreateAggregationRelReq) SyncResp
+	DeleteAggregationRel(req DeleteAggregationRelReq) SyncResp
+	CreateCompositionRel(req CreateCompositionRelReq) SyncResp
+	DeleteCompositionRel(req DeleteCompositionRelReq) SyncResp
+	CreatePermission(req CreatePermissionReq) SyncResp
+	DeletePermission(req DeletePermissionReq) SyncResp
+	GetPermissionHierarchy(req GetPermissionHierarchyReq) GetPermissionHierarchyResp
 }

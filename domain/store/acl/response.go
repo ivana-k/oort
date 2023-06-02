@@ -23,7 +23,7 @@ type GetResourceResp struct {
 	Error    error
 }
 
-type GetPermissionByPrecedenceResp struct {
+type GetPermissionHierarchyResp struct {
 	Hierarchy model.PermissionHierarchy
 	Error     error
 }

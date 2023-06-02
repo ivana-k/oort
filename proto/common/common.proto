@@ -6,6 +6,10 @@ package common;
 
 message AttributeId {
   string name = 1;
+}
+
+message Attribute {
+  AttributeId id = 1;
   enum AttributeKind {
     INT64 = 0;
     FLOAT64 = 1;
@@ -13,11 +17,7 @@ message AttributeId {
     BOOL = 3;
   }
   AttributeKind kind = 2;
-}
-
-message Attribute {
-  AttributeId id = 1;
-  bytes value = 2;
+  bytes value = 3;
 }
 
 message AttributeList {

@@ -4,9 +4,6 @@ import (
 	"errors"
 	"github.com/c12s/oort/domain/async"
 	"github.com/c12s/oort/domain/syncer"
-	"github.com/c12s/oort/proto/common"
-	"github.com/c12s/oort/proto/syncerpb"
-	"google.golang.org/protobuf/proto"
 )
 
 type SyncerAsyncApi struct {
@@ -16,27 +13,6 @@ type SyncerAsyncApi struct {
 
 func NewSyncerAsyncApi(subscriber async.Subscriber, subject, queueGroup string, serializer async.SyncMessageSerializer, handler syncer.Handler) error {
 	s := SyncerAsyncApi{serializer: serializer, handler: handler}
-	req := syncerpb.ConnectResourcesReq{
-		Id: "reqid",
-		Parent: &common.Resource{
-			Id:   "id",
-			Kind: "kind",
-		},
-		Child: &common.Resource{
-			Id:   "cid",
-			Kind: "ckind",
-		},
-	}
-	b, _ := proto.Marshal(&req)
-	msg := syncerpb.SyncMessage{
-		Kind:    syncerpb.SyncMessage_CONNECT_RESOURCES,
-		Payload: b,
-	}
-	msgProto, _ := proto.Marshal(&msg)
-	err := s.handle(msgProto)
-	if err != nil {
-		panic(err)
-	}
 	return subscriber.Subscribe(subject, queueGroup, s.handle)
 }
 
@@ -51,18 +27,28 @@ func (s SyncerAsyncApi) handle(message []byte) error {
 	}
 	var respError error
 	switch msg.RequestKind() {
-	case async.ConnectResources:
-		s.handler.ConnectResources(request.(syncer.ConnectResourcesReq))
-	case async.DisconnectResources:
-		s.handler.DisconnectResources(request.(syncer.DisconnectResourcesReq))
-	case async.UpsertAttribute:
-		s.handler.UpsertAttribute(request.(syncer.UpsertAttributeReq))
-	case async.RemoveAttribute:
-		s.handler.RemoveAttribute(request.(syncer.RemoveAttributeReq))
-	case async.InsertPermission:
-		s.handler.InsertPermission(request.(syncer.InsertPermissionReq))
-	case async.RemovePermission:
-		s.handler.RemovePermission(request.(syncer.RemovePermissionReq))
+	case async.CreateResource:
+		s.handler.CreateResource(request.(syncer.CreateResourceReq))
+	case async.DeleteResource:
+		s.handler.DeleteResource(request.(syncer.DeleteResourceReq))
+	case async.CreateAttribute:
+		s.handler.CreateAttribute(request.(syncer.CreateAttributeReq))
+	case async.UpdateAttribute:
+		s.handler.UpdateAttribute(request.(syncer.UpdateAttributeReq))
+	case async.DeleteAttribute:
+		s.handler.DeleteAttribute(request.(syncer.DeleteAttributeReq))
+	case async.CreateAggregationRel:
+		s.handler.CreateAggregationRelReq(request.(syncer.CreateAggregationRelReq))
+	case async.DeleteAggregationRel:
+		s.handler.DeleteAggregationRelReq(request.(syncer.DeleteAggregationRelReq))
+	case async.CreateCompositionRel:
+		s.handler.CreateCompositionRelReq(request.(syncer.CreateCompositionRelReq))
+	case async.DeleteCompositionRel:
+		s.handler.DeleteCompositionRelReq(request.(syncer.DeleteCompositionRelReq))
+	case async.CreatePermission:
+		s.handler.CreatePermission(request.(syncer.CreatePermissionReq))
+	case async.DeletePermission:
+		s.handler.DeletePermission(request.(syncer.DeletePermissionReq))
 	default:
 		respError = errors.New("unknown message kind")
 	}

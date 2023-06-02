@@ -17,8 +17,8 @@ func (x *CheckPermissionReq) MapToDomain() checker.CheckPermissionReq {
 		envAttributes[i] = domainAttr
 	}
 	return checker.CheckPermissionReq{
-		Principal:      x.Principal.MapToDomain(),
-		Resource:       x.Resource.MapToDomain(),
+		Subject:        x.Subject.MapToDomain(),
+		Object:         x.Object.MapToDomain(),
 		PermissionName: x.PermissionName,
 		Env:            envAttributes,
 	}

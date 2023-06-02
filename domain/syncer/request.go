@@ -6,64 +6,112 @@ type Request interface {
 	Id() string
 }
 
-type ConnectResourcesReq struct {
-	ReqId string
-	Parent,
-	Child model.Resource
+type CreateResourceReq struct {
+	ReqId    string
+	Resource model.Resource
 }
 
-func (r ConnectResourcesReq) Id() string {
+func (r CreateResourceReq) Id() string {
 	return r.ReqId
 }
 
-type DisconnectResourcesReq struct {
-	ReqId string
-	Parent,
-	Child model.Resource
+type DeleteResourceReq struct {
+	ReqId    string
+	Resource model.Resource
 }
 
-func (r DisconnectResourcesReq) Id() string {
+func (r DeleteResourceReq) Id() string {
 	return r.ReqId
 }
 
-type UpsertAttributeReq struct {
+type CreateAttributeReq struct {
 	ReqId     string
 	Resource  model.Resource
 	Attribute model.Attribute
 }
 
-func (r UpsertAttributeReq) Id() string {
+func (r CreateAttributeReq) Id() string {
 	return r.ReqId
 }
 
-type RemoveAttributeReq struct {
+type UpdateAttributeReq struct {
+	ReqId     string
+	Resource  model.Resource
+	Attribute model.Attribute
+}
+
+func (r UpdateAttributeReq) Id() string {
+	return r.ReqId
+}
+
+type DeleteAttributeReq struct {
 	ReqId       string
 	Resource    model.Resource
 	AttributeId model.AttributeId
 }
 
-func (r RemoveAttributeReq) Id() string {
+func (r DeleteAttributeReq) Id() string {
 	return r.ReqId
 }
 
-type InsertPermissionReq struct {
+type CreateAggregationRelReq struct {
 	ReqId string
-	Principal,
-	Resource model.Resource
-	Permission model.Permission
+	Parent,
+	Child model.Resource
 }
 
-func (r InsertPermissionReq) Id() string {
+func (r CreateAggregationRelReq) Id() string {
 	return r.ReqId
 }
 
-type RemovePermissionReq struct {
+type DeleteAggregationRelReq struct {
 	ReqId string
-	Principal,
-	Resource model.Resource
+	Parent,
+	Child model.Resource
+}
+
+func (r DeleteAggregationRelReq) Id() string {
+	return r.ReqId
+}
+
+type CreateCompositionRelReq struct {
+	ReqId string
+	Parent,
+	Child model.Resource
+}
+
+func (r CreateCompositionRelReq) Id() string {
+	return r.ReqId
+}
+
+type DeleteCompositionRelReq struct {
+	ReqId string
+	Parent,
+	Child model.Resource
+}
+
+func (r DeleteCompositionRelReq) Id() string {
+	return r.ReqId
+}
+
+type CreatePermissionReq struct {
+	ReqId string
+	Subject,
+	Object *model.Resource
 	Permission model.Permission
 }
 
-func (r RemovePermissionReq) Id() string {
+func (r CreatePermissionReq) Id() string {
+	return r.ReqId
+}
+
+type DeletePermissionReq struct {
+	ReqId string
+	Subject,
+	Object *model.Resource
+	Permission model.Permission
+}
+
+func (r DeletePermissionReq) Id() string {
 	return r.ReqId
 }

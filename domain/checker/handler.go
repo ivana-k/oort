@@ -31,27 +31,27 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		}
 	}
 
-	resp := h.store.GetPermissionByPrecedence(acl.GetPermissionReq{
-		Principal:      req.Principal,
-		Resource:       req.Resource,
+	resp := h.store.GetPermissionHierarchy(acl.GetPermissionHierarchyReq{
+		Subject:        req.Subject,
+		Object:         req.Object,
 		PermissionName: req.PermissionName,
 	})
 	if resp.Error != nil {
 		return errorResponse(resp.Error)
 	}
 
-	principalAttrs := h.getAttributes(req.Principal)
-	if principalAttrs.Error != nil {
-		return errorResponse(principalAttrs.Error)
+	principalAttrs, err := h.getAttributes(req.Subject)
+	if err != nil {
+		return errorResponse(err)
 	}
-	resourceAttrs := h.getAttributes(req.Resource)
-	if resourceAttrs.Error != nil {
-		return errorResponse(resourceAttrs.Error)
+	resourceAttrs, err := h.getAttributes(req.Object)
+	if err != nil {
+		return errorResponse(err)
 	}
 
 	evalReq := model.PermissionEvalRequest{
-		Principal: principalAttrs.Attributes,
-		Resource:  resourceAttrs.Attributes,
+		Principal: principalAttrs,
+		Resource:  resourceAttrs,
 		Env:       req.Env,
 	}
 	evalResult := resp.Hierarchy.Eval(evalReq)
@@ -68,38 +68,35 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 	return checkResp
 }
 
-func (h Handler) getAttributes(resource model.Resource) acl.GetAttributeResp {
+func (h Handler) getAttributes(resource model.Resource) ([]model.Attribute, error) {
 	if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
 		attrs, err := h.attrSerializer.Deserialize(value)
 		if err == nil {
-			return acl.GetAttributeResp{
-				Attributes: attrs,
-				Error:      nil,
-			}
+			return attrs, nil
 		}
 	}
 
-	attrs := h.store.GetAttributes(acl.GetAttributeReq{Resource: resource})
-	if attrs.Error != nil {
-		return attrs
+	res := h.store.GetResource(acl.GetResourceReq{Resource: resource})
+	if res.Error != nil {
+		return nil, res.Error
 	}
 
-	if bytes, err := h.attrSerializer.Serialize(attrs.Attributes); err == nil {
+	if bytes, err := h.attrSerializer.Serialize(res.Resource.Attributes); err == nil {
 		_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
 	}
 
-	return attrs
+	return res.Resource.Attributes, nil
 }
 
 func checkRespCacheKey(req CheckPermissionReq) string {
 	return fmt.Sprintf("%s/%s/%s",
-		req.Principal.Id(),
-		req.Resource.Id(),
+		req.Subject.Name(),
+		req.Object.Name(),
 		req.PermissionName)
 }
 
 func attrCacheKey(resource model.Resource) string {
-	return resource.Id()
+	return resource.Name()
 }
 
 func errorResponse(err error) CheckPermissionResp {
