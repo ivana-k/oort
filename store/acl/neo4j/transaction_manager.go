@@ -1,7 +1,6 @@
 package neo4j
 
 import (
-	"errors"
 	"github.com/c12s/oort/domain/model"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"log"
@@ -31,14 +30,18 @@ func (manager *TransactionManager) WriteTransaction(cypher string, params map[st
 		if err != nil {
 			_ = transaction.Rollback()
 		}
-		if callback == nil {
+		// todo: otkomentarisi ovo kasnije
+		//if callback == nil {
+		//	return nil, nil
+		//}
+		//outboxMessage := callback(err)
+		//_, err = transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
+		//if err != nil {
+		//	_ = transaction.Rollback()
+		//	return nil, errors.New("outbox message could not be stored - " + err.Error())
+		//}
+		if result == nil {
 			return nil, nil
-		}
-		outboxMessage := callback(err)
-		_, err = transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
-		if err != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
 		}
 		return nil, result.Err()
 	})
@@ -62,15 +65,15 @@ func (manager *TransactionManager) WriteTransactions(cyphers []string, params []
 				break
 			}
 		}
-		if callback == nil {
-			return nil, nil
-		}
-		outboxMessage := callback(txErr)
-		result, err := transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
-		if err != nil || result.Err() != nil {
-			_ = transaction.Rollback()
-			return nil, errors.New("outbox message could not be stored - " + err.Error())
-		}
+		//if callback == nil {
+		//	return nil, nil
+		//}
+		//outboxMessage := callback(txErr)
+		//result, err := transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
+		//if err != nil || result.Err() != nil {
+		//	_ = transaction.Rollback()
+		//	return nil, errors.New("outbox message could not be stored - " + err.Error())
+		//}
 		return txErr, nil
 	})
 	return err
@@ -139,9 +142,9 @@ func (manager *TransactionManager) Stop() {
 	}
 }
 
-func (manager *TransactionManager) getOutboxMessageCypher(message model.OutboxMessage) (string, map[string]interface{}) {
-	return "CREATE (:OutboxMessage{kind: $kind, payload: $payload, processing: $processing})",
-		map[string]interface{}{"kind": message.Kind,
-			"payload":    message.Payload,
-			"processing": false}
-}
+//func (manager *TransactionManager) getOutboxMessageCypher(message model.OutboxMessage) (string, map[string]interface{}) {
+//	return "CREATE (:OutboxMessage{kind: $kind, payload: $payload, processing: $processing})",
+//		map[string]interface{}{"kind": message.Kind,
+//			"payload":    message.Payload,
+//			"processing": false}
+//}

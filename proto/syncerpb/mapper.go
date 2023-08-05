@@ -25,24 +25,12 @@ func (x *DeleteResourceReq) MapToDomain() (syncer.Request, error) {
 	}, nil
 }
 
-func (x *CreateAttributeReq) MapToDomain() (syncer.Request, error) {
+func (x *PutAttributeReq) MapToDomain() (syncer.Request, error) {
 	attr, err := x.Attribute.MapToDomain()
 	if err != nil {
-		return syncer.CreateAttributeReq{}, err
+		return syncer.PutAttributeReq{}, err
 	}
-	return syncer.CreateAttributeReq{
-		ReqId:     x.Id,
-		Resource:  x.Resource.MapToDomain(),
-		Attribute: attr,
-	}, nil
-}
-
-func (x *UpdateAttributeReq) MapToDomain() (syncer.Request, error) {
-	attr, err := x.Attribute.MapToDomain()
-	if err != nil {
-		return syncer.UpdateAttributeReq{}, err
-	}
-	return syncer.UpdateAttributeReq{
+	return syncer.PutAttributeReq{
 		ReqId:     x.Id,
 		Resource:  x.Resource.MapToDomain(),
 		Attribute: attr,
@@ -57,65 +45,49 @@ func (x *DeleteAttributeReq) MapToDomain() (syncer.Request, error) {
 	}, nil
 }
 
-func (x *CreateAggregationRelReq) MapToDomain() (syncer.Request, error) {
-	return syncer.CreateAggregationRelReq{
-		ReqId:  x.Id,
-		Parent: x.Parent.MapToDomain(),
-		Child:  x.Child.MapToDomain(),
+func (x *CreateInheritanceRelReq) MapToDomain() (syncer.Request, error) {
+	return syncer.CreateInheritanceRelReq{
+		ReqId: x.Id,
+		From:  x.From.MapToDomain(),
+		To:    x.To.MapToDomain(),
 	}, nil
 }
 
-func (x *DeleteAggregationRelReq) MapToDomain() (syncer.Request, error) {
-	return syncer.DeleteAggregationRelReq{
-		ReqId:  x.Id,
-		Parent: x.Parent.MapToDomain(),
-		Child:  x.Child.MapToDomain(),
+func (x *DeleteInheritanceRelReq) MapToDomain() (syncer.Request, error) {
+	return syncer.DeleteInheritanceRelReq{
+		ReqId: x.Id,
+		From:  x.From.MapToDomain(),
+		To:    x.To.MapToDomain(),
 	}, nil
 }
 
-func (x *CreateCompositionRelReq) MapToDomain() (syncer.Request, error) {
-	return syncer.CreateCompositionRelReq{
-		ReqId:  x.Id,
-		Parent: x.Parent.MapToDomain(),
-		Child:  x.Child.MapToDomain(),
-	}, nil
-}
-
-func (x *DeleteCompositionRelReq) MapToDomain() (syncer.Request, error) {
-	return syncer.DeleteCompositionRelReq{
-		ReqId:  x.Id,
-		Parent: x.Parent.MapToDomain(),
-		Child:  x.Child.MapToDomain(),
-	}, nil
-}
-
-func (x *CreatePermissionReq) MapToDomain() (syncer.Request, error) {
+func (x *CreatePolicyReq) MapToDomain() (syncer.Request, error) {
 	permission, err := x.Permission.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	subject := x.Subject.MapToDomain()
-	object := x.Object.MapToDomain()
-	return syncer.CreatePermissionReq{
-		ReqId:      x.Id,
-		Subject:    &subject,
-		Object:     &object,
-		Permission: permission,
+	subjectScope := x.SubjectScope.MapToDomain()
+	objectScope := x.ObjectScope.MapToDomain()
+	return syncer.CreatePolicyReq{
+		ReqId:        x.Id,
+		SubjectScope: &subjectScope,
+		ObjectScope:  &objectScope,
+		Permission:   permission,
 	}, nil
 }
 
-func (x *DeletePermissionReq) MapToDomain() (syncer.Request, error) {
+func (x *DeletePolicyReq) MapToDomain() (syncer.Request, error) {
 	permission, err := x.Permission.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	subject := x.Subject.MapToDomain()
-	object := x.Object.MapToDomain()
-	return syncer.DeletePermissionReq{
-		ReqId:      x.Id,
-		Subject:    &subject,
-		Object:     &object,
-		Permission: permission,
+	subjectScope := x.SubjectScope.MapToDomain()
+	objectScope := x.ObjectScope.MapToDomain()
+	return syncer.DeletePolicyReq{
+		ReqId:        x.Id,
+		SubjectScope: &subjectScope,
+		ObjectScope:  &objectScope,
+		Permission:   permission,
 	}, nil
 }
 

@@ -37,19 +37,8 @@ func (h Handler) DeleteResource(req DeleteResourceReq) SyncResp {
 	}
 }
 
-func (h Handler) CreateAttribute(req CreateAttributeReq) SyncResp {
-	resp := h.store.CreateAttribute(acl.CreateAttributeReq{
-		Resource:  req.Resource,
-		Attribute: req.Attribute,
-		Callback:  h.outboxMessageCallback(req),
-	})
-	return SyncResp{
-		Error: resp.Error,
-	}
-}
-
-func (h Handler) UpdateAttribute(req UpdateAttributeReq) SyncResp {
-	resp := h.store.UpdateAttribute(acl.UpdateAttributeReq{
+func (h Handler) PutAttribute(req PutAttributeReq) SyncResp {
+	resp := h.store.PutAttribute(acl.PutAttributeReq{
 		Resource:  req.Resource,
 		Attribute: req.Attribute,
 		Callback:  h.outboxMessageCallback(req),
@@ -70,10 +59,10 @@ func (h Handler) DeleteAttribute(req DeleteAttributeReq) SyncResp {
 	}
 }
 
-func (h Handler) CreateAggregationRelReq(req CreateAggregationRelReq) SyncResp {
-	resp := h.store.CreateAggregationRel(acl.CreateAggregationRelReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
+func (h Handler) CreateInheritanceRel(req CreateInheritanceRelReq) SyncResp {
+	resp := h.store.CreateInheritanceRel(acl.CreateInheritanceRelReq{
+		From:     req.From,
+		To:       req.To,
 		Callback: h.outboxMessageCallback(req),
 	})
 	return SyncResp{
@@ -81,10 +70,10 @@ func (h Handler) CreateAggregationRelReq(req CreateAggregationRelReq) SyncResp {
 	}
 }
 
-func (h Handler) DeleteAggregationRelReq(req DeleteAggregationRelReq) SyncResp {
-	resp := h.store.DeleteAggregationRel(acl.DeleteAggregationRelReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
+func (h Handler) DeleteInheritanceRel(req DeleteInheritanceRelReq) SyncResp {
+	resp := h.store.DeleteInheritanceRel(acl.DeleteInheritanceRelReq{
+		From:     req.From,
+		To:       req.To,
 		Callback: h.outboxMessageCallback(req),
 	})
 	return SyncResp{
@@ -92,58 +81,36 @@ func (h Handler) DeleteAggregationRelReq(req DeleteAggregationRelReq) SyncResp {
 	}
 }
 
-func (h Handler) CreateCompositionRelReq(req CreateCompositionRelReq) SyncResp {
-	resp := h.store.CreateCompositionRel(acl.CreateCompositionRelReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
-		Callback: h.outboxMessageCallback(req),
+func (h Handler) CreatePolicy(req CreatePolicyReq) SyncResp {
+	if req.SubjectScope == nil {
+		req.SubjectScope = &model.RootResource
+	}
+	if req.ObjectScope == nil {
+		req.ObjectScope = &model.RootResource
+	}
+	resp := h.store.CreatePolicy(acl.CreatePolicyReq{
+		SubjectScope: *req.SubjectScope,
+		ObjectScope:  *req.ObjectScope,
+		Permission:   req.Permission,
+		Callback:     h.outboxMessageCallback(req),
 	})
 	return SyncResp{
 		Error: resp.Error,
 	}
 }
 
-func (h Handler) DeleteCompositionRelReq(req DeleteCompositionRelReq) SyncResp {
-	resp := h.store.DeleteCompositionRel(acl.DeleteCompositionRelReq{
-		Parent:   req.Parent,
-		Child:    req.Child,
-		Callback: h.outboxMessageCallback(req),
-	})
-	return SyncResp{
-		Error: resp.Error,
+func (h Handler) DeletePolicy(req DeletePolicyReq) SyncResp {
+	if req.SubjectScope == nil {
+		req.SubjectScope = &model.RootResource
 	}
-}
-
-func (h Handler) CreatePermission(req CreatePermissionReq) SyncResp {
-	if req.Subject == nil {
-		req.Subject = &model.RootResource
+	if req.ObjectScope == nil {
+		req.ObjectScope = &model.RootResource
 	}
-	if req.Object == nil {
-		req.Object = &model.RootResource
-	}
-	resp := h.store.CreatePermission(acl.CreatePermissionReq{
-		Subject:    *req.Subject,
-		Object:     *req.Object,
-		Permission: req.Permission,
-		Callback:   h.outboxMessageCallback(req),
-	})
-	return SyncResp{
-		Error: resp.Error,
-	}
-}
-
-func (h Handler) DeletePermission(req DeletePermissionReq) SyncResp {
-	if req.Subject == nil {
-		req.Subject = &model.RootResource
-	}
-	if req.Object == nil {
-		req.Object = &model.RootResource
-	}
-	resp := h.store.DeletePermission(acl.DeletePermissionReq{
-		Subject:    *req.Subject,
-		Object:     *req.Object,
-		Permission: req.Permission,
-		Callback:   h.outboxMessageCallback(req),
+	resp := h.store.DeletePolicy(acl.DeletePolicyReq{
+		SubjectScope: *req.SubjectScope,
+		ObjectScope:  *req.ObjectScope,
+		Permission:   req.Permission,
+		Callback:     h.outboxMessageCallback(req),
 	})
 	return SyncResp{
 		Error: resp.Error,

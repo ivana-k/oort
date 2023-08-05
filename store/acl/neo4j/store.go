@@ -8,10 +8,10 @@ import (
 
 type AclStore struct {
 	manager *TransactionManager
-	factory cypherFactory
+	factory CypherFactory
 }
 
-func NewAclStore(manager *TransactionManager, factory cypherFactory) acl.Store {
+func NewAclStore(manager *TransactionManager, factory CypherFactory) acl.Store {
 	return AclStore{
 		manager: manager,
 		factory: factory,
@@ -19,13 +19,13 @@ func NewAclStore(manager *TransactionManager, factory cypherFactory) acl.Store {
 }
 
 func (store AclStore) CreateResource(req acl.CreateResourceReq) acl.SyncResp {
-	cypher1, params1 := store.factory.createResourceCypher(req)
+	cypher1, params1 := store.factory.createResource(req)
 	idAttr := model.NewAttribute(model.NewAttributeId("id"), model.String, req.Resource.Id())
-	idAttrReq := acl.CreateAttributeReq{Resource: req.Resource, Attribute: idAttr}
-	cypher2, params2 := store.factory.createAttributeCypher(idAttrReq)
+	idAttrReq := acl.PutAttributeReq{Resource: req.Resource, Attribute: idAttr}
+	cypher2, params2 := store.factory.putAttribute(idAttrReq)
 	kindAttr := model.NewAttribute(model.NewAttributeId("kind"), model.String, req.Resource.Kind())
-	kindAttrReq := acl.CreateAttributeReq{Resource: req.Resource, Attribute: kindAttr}
-	cypher3, params3 := store.factory.createAttributeCypher(kindAttrReq)
+	kindAttrReq := acl.PutAttributeReq{Resource: req.Resource, Attribute: kindAttr}
+	cypher3, params3 := store.factory.putAttribute(kindAttrReq)
 	cyphers := []string{cypher1, cypher2, cypher3}
 	params := []map[string]interface{}{params1, params2, params3}
 	err := store.manager.WriteTransactions(cyphers, params, req.Callback)
@@ -33,13 +33,13 @@ func (store AclStore) CreateResource(req acl.CreateResourceReq) acl.SyncResp {
 }
 
 func (store AclStore) DeleteResource(req acl.DeleteResourceReq) acl.SyncResp {
-	cypher, params := store.factory.deleteResourceCypher(req)
+	cypher, params := store.factory.deleteResource(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
 func (store AclStore) GetResource(req acl.GetResourceReq) acl.GetResourceResp {
-	cypher, params := store.factory.getResourceCypher(req)
+	cypher, params := store.factory.getResource(req)
 	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
 		return acl.GetResourceResp{Resource: nil, Error: err}
@@ -61,62 +61,47 @@ func (store AclStore) GetResource(req acl.GetResourceReq) acl.GetResourceResp {
 	return acl.GetResourceResp{Resource: getResource(resourceAttrs), Error: nil}
 }
 
-func (store AclStore) CreateAttribute(req acl.CreateAttributeReq) acl.SyncResp {
-	cypher, params := store.factory.createAttributeCypher(req)
-	err := store.manager.WriteTransaction(cypher, params, req.Callback)
-	return acl.SyncResp{Error: err}
-}
-
-func (store AclStore) UpdateAttribute(req acl.UpdateAttributeReq) acl.SyncResp {
-	cypher, params := store.factory.updateAttributeCypher(req)
+// todo: if the resource is being created, assign default attrs to it
+func (store AclStore) PutAttribute(req acl.PutAttributeReq) acl.SyncResp {
+	cypher, params := store.factory.putAttribute(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
 func (store AclStore) DeleteAttribute(req acl.DeleteAttributeReq) acl.SyncResp {
-	cypher, params := store.factory.deleteAttributeCypher(req)
+	cypher, params := store.factory.deleteAttribute(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) CreateAggregationRel(req acl.CreateAggregationRelReq) acl.SyncResp {
-	cypher, params := store.factory.createAggregationRelCypher(req)
+// todo: if the resource is being created, assign default attrs to it
+func (store AclStore) CreateInheritanceRel(req acl.CreateInheritanceRelReq) acl.SyncResp {
+	cypher, params := store.factory.createInheritanceRel(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) DeleteAggregationRel(req acl.DeleteAggregationRelReq) acl.SyncResp {
-	cypher, params := store.factory.deleteAggregationRelCypher(req)
+func (store AclStore) DeleteInheritanceRel(req acl.DeleteInheritanceRelReq) acl.SyncResp {
+	cypher, params := store.factory.deleteInheritanceRel(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) CreateCompositionRel(req acl.CreateCompositionRelReq) acl.SyncResp {
-	cypher, params := store.factory.createCompositionRelCypher(req)
+// todo: if the resource is being created, assign default attrs to it
+func (store AclStore) CreatePolicy(req acl.CreatePolicyReq) acl.SyncResp {
+	cypher, params := store.factory.createPolicy(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
-func (store AclStore) DeleteCompositionRel(req acl.DeleteCompositionRelReq) acl.SyncResp {
-	cypher, params := store.factory.deleteCompositionRelCypher(req)
-	err := store.manager.WriteTransaction(cypher, params, req.Callback)
-	return acl.SyncResp{Error: err}
-}
-
-func (store AclStore) CreatePermission(req acl.CreatePermissionReq) acl.SyncResp {
-	cypher, params := store.factory.createPermissionCypher(req)
-	err := store.manager.WriteTransaction(cypher, params, req.Callback)
-	return acl.SyncResp{Error: err}
-}
-
-func (store AclStore) DeletePermission(req acl.DeletePermissionReq) acl.SyncResp {
-	cypher, params := store.factory.deletePermissionCypher(req)
+func (store AclStore) DeletePolicy(req acl.DeletePolicyReq) acl.SyncResp {
+	cypher, params := store.factory.deletePolicy(req)
 	err := store.manager.WriteTransaction(cypher, params, req.Callback)
 	return acl.SyncResp{Error: err}
 }
 
 func (store AclStore) GetPermissionHierarchy(req acl.GetPermissionHierarchyReq) acl.GetPermissionHierarchyResp {
-	cypher, params := store.factory.getEffectivePermissionsWithPriorityCypher(req)
+	cypher, params := store.factory.getEffectivePermissionsWithPriority(req)
 	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
 		return acl.GetPermissionHierarchyResp{Hierarchy: nil, Error: err}

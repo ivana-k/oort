@@ -9,15 +9,12 @@ type SyncMsgKind int
 const (
 	CreateResource SyncMsgKind = iota
 	DeleteResource
-	CreateAttribute
-	UpdateAttribute
+	PutAttribute
 	DeleteAttribute
-	CreateAggregationRel
-	DeleteAggregationRel
-	CreateCompositionRel
-	DeleteCompositionRel
-	CreatePermission
-	DeletePermission
+	CreateInheritanceRel
+	DeleteInheritanceRel
+	CreatePolicy
+	DeletePolicy
 )
 
 type SyncMessage interface {

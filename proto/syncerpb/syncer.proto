@@ -9,15 +9,12 @@ import "common.proto";
 service SyncerService {
   rpc CreateResource(CreateResourceReq) returns (SyncResp) {}
   rpc DeleteResource(DeleteResourceReq) returns (SyncResp) {}
-  rpc CreateAggregationRel(CreateAggregationRelReq) returns (SyncResp) {}
-  rpc DeleteAggregationRel(DeleteAggregationRelReq) returns (SyncResp) {}
-  rpc CreateCompositionRel(CreateCompositionRelReq) returns (SyncResp) {}
-  rpc DeleteCompositionRel(DeleteCompositionRelReq) returns (SyncResp) {}
-  rpc CreateAttribute(CreateAttributeReq) returns (SyncResp) {}
-  rpc UpdateAttribute(UpdateAttributeReq) returns (SyncResp) {}
+  rpc CreateInheritanceRel(CreateInheritanceRelReq) returns (SyncResp) {}
+  rpc DeleteInheritanceRel(DeleteInheritanceRelReq) returns (SyncResp) {}
+  rpc PutAttribute(PutAttributeReq) returns (SyncResp) {}
   rpc DeleteAttribute(DeleteAttributeReq) returns (SyncResp) {}
-  rpc CreatePermission(CreatePermissionReq) returns (SyncResp) {}
-  rpc DeletePermission(DeletePermissionReq) returns (SyncResp) {}
+  rpc CreatePolicy(CreatePolicyReq) returns (SyncResp) {}
+  rpc DeletePolicy(DeletePolicyReq) returns (SyncResp) {}
 }
 
 message CreateResourceReq {
@@ -30,37 +27,19 @@ message DeleteResourceReq {
   string id = 2;
 }
 
-message CreateAggregationRelReq {
-  common.Resource parent = 1;
-  common.Resource child = 2;
+message CreateInheritanceRelReq {
+  common.Resource from = 1;
+  common.Resource to = 2;
   string id = 3;
 }
 
-message DeleteAggregationRelReq {
-  common.Resource parent = 1;
-  common.Resource child = 2;
+message DeleteInheritanceRelReq {
+  common.Resource from = 1;
+  common.Resource to = 2;
   string id = 3;
 }
 
-message CreateCompositionRelReq {
-  common.Resource parent = 1;
-  common.Resource child = 2;
-  string id = 3;
-}
-
-message DeleteCompositionRelReq {
-  common.Resource parent = 1;
-  common.Resource child = 2;
-  string id = 3;
-}
-
-message CreateAttributeReq {
-  common.Resource resource = 1;
-  common.Attribute attribute = 2;
-  string id = 3;
-}
-
-message UpdateAttributeReq {
+message PutAttributeReq {
   common.Resource resource = 1;
   common.Attribute attribute = 2;
   string id = 3;
@@ -72,16 +51,16 @@ message DeleteAttributeReq {
   string id = 3;
 }
 
-message CreatePermissionReq {
-  common.Resource subject = 1;
-  common.Resource object = 2;
+message CreatePolicyReq {
+  common.Resource subjectScope = 1;
+  common.Resource objectScope = 2;
   common.Permission permission = 3;
   string id = 4;
 }
 
-message DeletePermissionReq {
-  common.Resource subject = 1;
-  common.Resource object = 2;
+message DeletePolicyReq {
+  common.Resource subjectScope = 1;
+  common.Resource objectScope = 2;
   common.Permission permission = 3;
   string id = 4;
 }
@@ -90,15 +69,12 @@ message SyncMessage {
   enum SyncKind {
       CreateResource = 0;
       DeleteResource = 1;
-      CreateAttribute = 2;
-      UpdateAttribute = 3;
-      DeleteAttribute = 4;
-      CreateAggregationRel = 5;
-      DeleteAggregationRel = 6;
-      CreateCompositionRel = 7;
-      DeleteCompositionRel = 8;
-      CreatePermission = 9;
-      DeletePermission = 10;
+      PutAttribute = 2;
+      DeleteAttribute = 3;
+      CreateInheritanceRel = 4;
+      DeleteInheritanceRel = 5;
+      CreatePolicy = 6;
+      DeletePolicy = 7;
   }
   SyncKind kind = 1;
   bytes payload = 2;

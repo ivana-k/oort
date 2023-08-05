@@ -36,40 +36,28 @@ func (x *SyncMessage) Request() (syncer.Request, error) {
 		req := &DeleteResourceReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_CreateAttribute:
-		req := &CreateAttributeReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncMessage_UpdateAttribute:
-		req := &UpdateAttributeReq{}
+	case SyncMessage_PutAttribute:
+		req := &PutAttributeReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
 	case SyncMessage_DeleteAttribute:
 		req := &DeleteAttributeReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_CreateAggregationRel:
-		req := &CreateAggregationRelReq{}
+	case SyncMessage_CreateInheritanceRel:
+		req := &CreateInheritanceRelReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_DeleteAggregationRel:
-		req := &DeleteAggregationRelReq{}
+	case SyncMessage_DeleteInheritanceRel:
+		req := &DeleteInheritanceRelReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_CreateCompositionRel:
-		req := &CreateCompositionRelReq{}
+	case SyncMessage_CreatePolicy:
+		req := &CreatePolicyReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
-	case SyncMessage_DeleteCompositionRel:
-		req := &DeleteCompositionRelReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncMessage_CreatePermission:
-		req := &CreatePermissionReq{}
-		err = proto.Unmarshal(x.Payload, req)
-		request = req
-	case SyncMessage_DeletePermission:
-		req := &DeletePermissionReq{}
+	case SyncMessage_DeletePolicy:
+		req := &DeletePolicyReq{}
 		err = proto.Unmarshal(x.Payload, req)
 		request = req
 	default:

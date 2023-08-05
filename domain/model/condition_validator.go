@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	ResourceVarNamePrefix  = "resource_"
-	PrincipalVarNamePrefix = "principal_"
-	EnvVarNamePrefix       = "env_"
+	SubVarNamePrefix = "sub_"
+	ObjVarNamePrefix = "obj_"
+	EnvVarNamePrefix = "env_"
 )
 
 var validOperations = []token.Token{
@@ -67,10 +67,10 @@ func validate(expression string) error {
 }
 
 func validVariableNamePrefix(varName string) bool {
-	if strings.HasPrefix(varName, ResourceVarNamePrefix) {
+	if strings.HasPrefix(varName, SubVarNamePrefix) {
 		return true
 	}
-	if strings.HasPrefix(varName, PrincipalVarNamePrefix) {
+	if strings.HasPrefix(varName, ObjVarNamePrefix) {
 		return true
 	}
 	if strings.HasPrefix(varName, EnvVarNamePrefix) {

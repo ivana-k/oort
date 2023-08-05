@@ -24,12 +24,12 @@ func NewHandler(store acl.Store, cache cache.Cache, attrSerializer AttributeSeri
 }
 
 func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
-	if value, err := h.cache.Get(checkRespCacheKey(req)); err == nil {
-		resp, err := h.checkRespSerializer.Deserialize(value)
-		if err != nil {
-			return resp
-		}
-	}
+	//if value, err := h.cache.Get(checkRespCacheKey(req)); err == nil {
+	//	resp, err := h.checkRespSerializer.Deserialize(value)
+	//	if err != nil {
+	//		return resp
+	//	}
+	//}
 
 	resp := h.store.GetPermissionHierarchy(acl.GetPermissionHierarchyReq{
 		Subject:        req.Subject,
@@ -40,19 +40,19 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		return errorResponse(resp.Error)
 	}
 
-	principalAttrs, err := h.getAttributes(req.Subject)
+	subAttrs, err := h.getAttributes(req.Subject)
 	if err != nil {
 		return errorResponse(err)
 	}
-	resourceAttrs, err := h.getAttributes(req.Object)
+	objAttrs, err := h.getAttributes(req.Object)
 	if err != nil {
 		return errorResponse(err)
 	}
 
 	evalReq := model.PermissionEvalRequest{
-		Principal: principalAttrs,
-		Resource:  resourceAttrs,
-		Env:       req.Env,
+		Subject: subAttrs,
+		Object:  objAttrs,
+		Env:     req.Env,
 	}
 	evalResult := resp.Hierarchy.Eval(evalReq)
 
@@ -61,29 +61,29 @@ func (h Handler) CheckPermission(req CheckPermissionReq) CheckPermissionResp {
 		Error:   nil,
 	}
 
-	if value, err := h.checkRespSerializer.Serialize(checkResp); err == nil {
-		_ = h.cache.Set(checkRespCacheKey(req), value, []string{})
-	}
+	//if value, err := h.checkRespSerializer.Serialize(checkResp); err == nil {
+	//	_ = h.cache.Set(checkRespCacheKey(req), value, []string{})
+	//}
 
 	return checkResp
 }
 
 func (h Handler) getAttributes(resource model.Resource) ([]model.Attribute, error) {
-	if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
-		attrs, err := h.attrSerializer.Deserialize(value)
-		if err == nil {
-			return attrs, nil
-		}
-	}
+	//if value, err := h.cache.Get(attrCacheKey(resource)); err == nil {
+	//	attrs, err := h.attrSerializer.Deserialize(value)
+	//	if err == nil {
+	//		return attrs, nil
+	//	}
+	//}
 
 	res := h.store.GetResource(acl.GetResourceReq{Resource: resource})
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	if bytes, err := h.attrSerializer.Serialize(res.Resource.Attributes); err == nil {
-		_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
-	}
+	//if bytes, err := h.attrSerializer.Serialize(res.Resource.Attributes); err == nil {
+	//	_ = h.cache.Set(attrCacheKey(resource), bytes, []string{})
+	//}
 
 	return res.Resource.Attributes, nil
 }

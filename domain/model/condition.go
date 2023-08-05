@@ -23,7 +23,7 @@ func (c Condition) Expression() string {
 func (c Condition) IsEmpty() bool {
 	return c.expression == ""
 }
-func (c Condition) Eval(principal, resource, env []Attribute) bool {
+func (c Condition) Eval(sub, obj, env []Attribute) bool {
 	if c.IsEmpty() {
 		return true
 	}
@@ -34,11 +34,11 @@ func (c Condition) Eval(principal, resource, env []Attribute) bool {
 	}
 
 	parameters := make(map[string]interface{}, 8)
-	for _, attr := range principal {
-		parameters[PrincipalVarNamePrefix+attr.Name()] = attr.Value()
+	for _, attr := range sub {
+		parameters[SubVarNamePrefix+attr.Name()] = attr.Value()
 	}
-	for _, attr := range resource {
-		parameters[ResourceVarNamePrefix+attr.Name()] = attr.Value()
+	for _, attr := range obj {
+		parameters[ObjVarNamePrefix+attr.Name()] = attr.Value()
 	}
 	for _, attr := range env {
 		parameters[EnvVarNamePrefix+attr.Name()] = attr.Value()

@@ -31,24 +31,18 @@ func (s SyncerAsyncApi) handle(message []byte) error {
 		s.handler.CreateResource(request.(syncer.CreateResourceReq))
 	case async.DeleteResource:
 		s.handler.DeleteResource(request.(syncer.DeleteResourceReq))
-	case async.CreateAttribute:
-		s.handler.CreateAttribute(request.(syncer.CreateAttributeReq))
-	case async.UpdateAttribute:
-		s.handler.UpdateAttribute(request.(syncer.UpdateAttributeReq))
+	case async.PutAttribute:
+		s.handler.PutAttribute(request.(syncer.PutAttributeReq))
 	case async.DeleteAttribute:
 		s.handler.DeleteAttribute(request.(syncer.DeleteAttributeReq))
-	case async.CreateAggregationRel:
-		s.handler.CreateAggregationRelReq(request.(syncer.CreateAggregationRelReq))
-	case async.DeleteAggregationRel:
-		s.handler.DeleteAggregationRelReq(request.(syncer.DeleteAggregationRelReq))
-	case async.CreateCompositionRel:
-		s.handler.CreateCompositionRelReq(request.(syncer.CreateCompositionRelReq))
-	case async.DeleteCompositionRel:
-		s.handler.DeleteCompositionRelReq(request.(syncer.DeleteCompositionRelReq))
-	case async.CreatePermission:
-		s.handler.CreatePermission(request.(syncer.CreatePermissionReq))
-	case async.DeletePermission:
-		s.handler.DeletePermission(request.(syncer.DeletePermissionReq))
+	case async.CreateInheritanceRel:
+		s.handler.CreateInheritanceRel(request.(syncer.CreateInheritanceRelReq))
+	case async.DeleteInheritanceRel:
+		s.handler.DeleteInheritanceRel(request.(syncer.DeleteInheritanceRelReq))
+	case async.CreatePolicy:
+		s.handler.CreatePolicy(request.(syncer.CreatePolicyReq))
+	case async.DeletePolicy:
+		s.handler.DeletePolicy(request.(syncer.DeletePolicyReq))
 	default:
 		respError = errors.New("unknown message kind")
 	}

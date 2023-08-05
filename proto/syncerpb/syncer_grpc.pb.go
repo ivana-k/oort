@@ -24,15 +24,12 @@ const _ = grpc.SupportPackageIsVersion7
 type SyncerServiceClient interface {
 	CreateResource(ctx context.Context, in *CreateResourceReq, opts ...grpc.CallOption) (*SyncResp, error)
 	DeleteResource(ctx context.Context, in *DeleteResourceReq, opts ...grpc.CallOption) (*SyncResp, error)
-	CreateAggregationRel(ctx context.Context, in *CreateAggregationRelReq, opts ...grpc.CallOption) (*SyncResp, error)
-	DeleteAggregationRel(ctx context.Context, in *DeleteAggregationRelReq, opts ...grpc.CallOption) (*SyncResp, error)
-	CreateCompositionRel(ctx context.Context, in *CreateCompositionRelReq, opts ...grpc.CallOption) (*SyncResp, error)
-	DeleteCompositionRel(ctx context.Context, in *DeleteCompositionRelReq, opts ...grpc.CallOption) (*SyncResp, error)
-	CreateAttribute(ctx context.Context, in *CreateAttributeReq, opts ...grpc.CallOption) (*SyncResp, error)
-	UpdateAttribute(ctx context.Context, in *UpdateAttributeReq, opts ...grpc.CallOption) (*SyncResp, error)
+	CreateInheritanceRel(ctx context.Context, in *CreateInheritanceRelReq, opts ...grpc.CallOption) (*SyncResp, error)
+	DeleteInheritanceRel(ctx context.Context, in *DeleteInheritanceRelReq, opts ...grpc.CallOption) (*SyncResp, error)
+	PutAttribute(ctx context.Context, in *PutAttributeReq, opts ...grpc.CallOption) (*SyncResp, error)
 	DeleteAttribute(ctx context.Context, in *DeleteAttributeReq, opts ...grpc.CallOption) (*SyncResp, error)
-	CreatePermission(ctx context.Context, in *CreatePermissionReq, opts ...grpc.CallOption) (*SyncResp, error)
-	DeletePermission(ctx context.Context, in *DeletePermissionReq, opts ...grpc.CallOption) (*SyncResp, error)
+	CreatePolicy(ctx context.Context, in *CreatePolicyReq, opts ...grpc.CallOption) (*SyncResp, error)
+	DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*SyncResp, error)
 }
 
 type syncerServiceClient struct {
@@ -61,54 +58,27 @@ func (c *syncerServiceClient) DeleteResource(ctx context.Context, in *DeleteReso
 	return out, nil
 }
 
-func (c *syncerServiceClient) CreateAggregationRel(ctx context.Context, in *CreateAggregationRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
+func (c *syncerServiceClient) CreateInheritanceRel(ctx context.Context, in *CreateInheritanceRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreateAggregationRel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreateInheritanceRel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *syncerServiceClient) DeleteAggregationRel(ctx context.Context, in *DeleteAggregationRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
+func (c *syncerServiceClient) DeleteInheritanceRel(ctx context.Context, in *DeleteInheritanceRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/DeleteAggregationRel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/DeleteInheritanceRel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *syncerServiceClient) CreateCompositionRel(ctx context.Context, in *CreateCompositionRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
+func (c *syncerServiceClient) PutAttribute(ctx context.Context, in *PutAttributeReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreateCompositionRel", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syncerServiceClient) DeleteCompositionRel(ctx context.Context, in *DeleteCompositionRelReq, opts ...grpc.CallOption) (*SyncResp, error) {
-	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/DeleteCompositionRel", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syncerServiceClient) CreateAttribute(ctx context.Context, in *CreateAttributeReq, opts ...grpc.CallOption) (*SyncResp, error) {
-	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreateAttribute", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syncerServiceClient) UpdateAttribute(ctx context.Context, in *UpdateAttributeReq, opts ...grpc.CallOption) (*SyncResp, error) {
-	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/UpdateAttribute", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/PutAttribute", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,18 +94,18 @@ func (c *syncerServiceClient) DeleteAttribute(ctx context.Context, in *DeleteAtt
 	return out, nil
 }
 
-func (c *syncerServiceClient) CreatePermission(ctx context.Context, in *CreatePermissionReq, opts ...grpc.CallOption) (*SyncResp, error) {
+func (c *syncerServiceClient) CreatePolicy(ctx context.Context, in *CreatePolicyReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreatePermission", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/CreatePolicy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *syncerServiceClient) DeletePermission(ctx context.Context, in *DeletePermissionReq, opts ...grpc.CallOption) (*SyncResp, error) {
+func (c *syncerServiceClient) DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/DeletePermission", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/syncerpb.SyncerService/DeletePolicy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -148,15 +118,12 @@ func (c *syncerServiceClient) DeletePermission(ctx context.Context, in *DeletePe
 type SyncerServiceServer interface {
 	CreateResource(context.Context, *CreateResourceReq) (*SyncResp, error)
 	DeleteResource(context.Context, *DeleteResourceReq) (*SyncResp, error)
-	CreateAggregationRel(context.Context, *CreateAggregationRelReq) (*SyncResp, error)
-	DeleteAggregationRel(context.Context, *DeleteAggregationRelReq) (*SyncResp, error)
-	CreateCompositionRel(context.Context, *CreateCompositionRelReq) (*SyncResp, error)
-	DeleteCompositionRel(context.Context, *DeleteCompositionRelReq) (*SyncResp, error)
-	CreateAttribute(context.Context, *CreateAttributeReq) (*SyncResp, error)
-	UpdateAttribute(context.Context, *UpdateAttributeReq) (*SyncResp, error)
+	CreateInheritanceRel(context.Context, *CreateInheritanceRelReq) (*SyncResp, error)
+	DeleteInheritanceRel(context.Context, *DeleteInheritanceRelReq) (*SyncResp, error)
+	PutAttribute(context.Context, *PutAttributeReq) (*SyncResp, error)
 	DeleteAttribute(context.Context, *DeleteAttributeReq) (*SyncResp, error)
-	CreatePermission(context.Context, *CreatePermissionReq) (*SyncResp, error)
-	DeletePermission(context.Context, *DeletePermissionReq) (*SyncResp, error)
+	CreatePolicy(context.Context, *CreatePolicyReq) (*SyncResp, error)
+	DeletePolicy(context.Context, *DeletePolicyReq) (*SyncResp, error)
 	mustEmbedUnimplementedSyncerServiceServer()
 }
 
@@ -170,32 +137,23 @@ func (UnimplementedSyncerServiceServer) CreateResource(context.Context, *CreateR
 func (UnimplementedSyncerServiceServer) DeleteResource(context.Context, *DeleteResourceReq) (*SyncResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteResource not implemented")
 }
-func (UnimplementedSyncerServiceServer) CreateAggregationRel(context.Context, *CreateAggregationRelReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAggregationRel not implemented")
+func (UnimplementedSyncerServiceServer) CreateInheritanceRel(context.Context, *CreateInheritanceRelReq) (*SyncResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateInheritanceRel not implemented")
 }
-func (UnimplementedSyncerServiceServer) DeleteAggregationRel(context.Context, *DeleteAggregationRelReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteAggregationRel not implemented")
+func (UnimplementedSyncerServiceServer) DeleteInheritanceRel(context.Context, *DeleteInheritanceRelReq) (*SyncResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteInheritanceRel not implemented")
 }
-func (UnimplementedSyncerServiceServer) CreateCompositionRel(context.Context, *CreateCompositionRelReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateCompositionRel not implemented")
-}
-func (UnimplementedSyncerServiceServer) DeleteCompositionRel(context.Context, *DeleteCompositionRelReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteCompositionRel not implemented")
-}
-func (UnimplementedSyncerServiceServer) CreateAttribute(context.Context, *CreateAttributeReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAttribute not implemented")
-}
-func (UnimplementedSyncerServiceServer) UpdateAttribute(context.Context, *UpdateAttributeReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAttribute not implemented")
+func (UnimplementedSyncerServiceServer) PutAttribute(context.Context, *PutAttributeReq) (*SyncResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutAttribute not implemented")
 }
 func (UnimplementedSyncerServiceServer) DeleteAttribute(context.Context, *DeleteAttributeReq) (*SyncResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAttribute not implemented")
 }
-func (UnimplementedSyncerServiceServer) CreatePermission(context.Context, *CreatePermissionReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePermission not implemented")
+func (UnimplementedSyncerServiceServer) CreatePolicy(context.Context, *CreatePolicyReq) (*SyncResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePolicy not implemented")
 }
-func (UnimplementedSyncerServiceServer) DeletePermission(context.Context, *DeletePermissionReq) (*SyncResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePermission not implemented")
+func (UnimplementedSyncerServiceServer) DeletePolicy(context.Context, *DeletePolicyReq) (*SyncResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicy not implemented")
 }
 func (UnimplementedSyncerServiceServer) mustEmbedUnimplementedSyncerServiceServer() {}
 
@@ -246,110 +204,56 @@ func _SyncerService_DeleteResource_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_CreateAggregationRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAggregationRelReq)
+func _SyncerService_CreateInheritanceRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateInheritanceRelReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).CreateAggregationRel(ctx, in)
+		return srv.(SyncerServiceServer).CreateInheritanceRel(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/CreateAggregationRel",
+		FullMethod: "/syncerpb.SyncerService/CreateInheritanceRel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).CreateAggregationRel(ctx, req.(*CreateAggregationRelReq))
+		return srv.(SyncerServiceServer).CreateInheritanceRel(ctx, req.(*CreateInheritanceRelReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_DeleteAggregationRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteAggregationRelReq)
+func _SyncerService_DeleteInheritanceRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteInheritanceRelReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).DeleteAggregationRel(ctx, in)
+		return srv.(SyncerServiceServer).DeleteInheritanceRel(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/DeleteAggregationRel",
+		FullMethod: "/syncerpb.SyncerService/DeleteInheritanceRel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).DeleteAggregationRel(ctx, req.(*DeleteAggregationRelReq))
+		return srv.(SyncerServiceServer).DeleteInheritanceRel(ctx, req.(*DeleteInheritanceRelReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_CreateCompositionRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateCompositionRelReq)
+func _SyncerService_PutAttribute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutAttributeReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).CreateCompositionRel(ctx, in)
+		return srv.(SyncerServiceServer).PutAttribute(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/CreateCompositionRel",
+		FullMethod: "/syncerpb.SyncerService/PutAttribute",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).CreateCompositionRel(ctx, req.(*CreateCompositionRelReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SyncerService_DeleteCompositionRel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteCompositionRelReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyncerServiceServer).DeleteCompositionRel(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/DeleteCompositionRel",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).DeleteCompositionRel(ctx, req.(*DeleteCompositionRelReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SyncerService_CreateAttribute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAttributeReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyncerServiceServer).CreateAttribute(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/CreateAttribute",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).CreateAttribute(ctx, req.(*CreateAttributeReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SyncerService_UpdateAttribute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAttributeReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyncerServiceServer).UpdateAttribute(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/UpdateAttribute",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).UpdateAttribute(ctx, req.(*UpdateAttributeReq))
+		return srv.(SyncerServiceServer).PutAttribute(ctx, req.(*PutAttributeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -372,38 +276,38 @@ func _SyncerService_DeleteAttribute_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_CreatePermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePermissionReq)
+func _SyncerService_CreatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePolicyReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).CreatePermission(ctx, in)
+		return srv.(SyncerServiceServer).CreatePolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/CreatePermission",
+		FullMethod: "/syncerpb.SyncerService/CreatePolicy",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).CreatePermission(ctx, req.(*CreatePermissionReq))
+		return srv.(SyncerServiceServer).CreatePolicy(ctx, req.(*CreatePolicyReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_DeletePermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeletePermissionReq)
+func _SyncerService_DeletePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePolicyReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).DeletePermission(ctx, in)
+		return srv.(SyncerServiceServer).DeletePolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/syncerpb.SyncerService/DeletePermission",
+		FullMethod: "/syncerpb.SyncerService/DeletePolicy",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).DeletePermission(ctx, req.(*DeletePermissionReq))
+		return srv.(SyncerServiceServer).DeletePolicy(ctx, req.(*DeletePolicyReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -424,40 +328,28 @@ var SyncerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SyncerService_DeleteResource_Handler,
 		},
 		{
-			MethodName: "CreateAggregationRel",
-			Handler:    _SyncerService_CreateAggregationRel_Handler,
+			MethodName: "CreateInheritanceRel",
+			Handler:    _SyncerService_CreateInheritanceRel_Handler,
 		},
 		{
-			MethodName: "DeleteAggregationRel",
-			Handler:    _SyncerService_DeleteAggregationRel_Handler,
+			MethodName: "DeleteInheritanceRel",
+			Handler:    _SyncerService_DeleteInheritanceRel_Handler,
 		},
 		{
-			MethodName: "CreateCompositionRel",
-			Handler:    _SyncerService_CreateCompositionRel_Handler,
-		},
-		{
-			MethodName: "DeleteCompositionRel",
-			Handler:    _SyncerService_DeleteCompositionRel_Handler,
-		},
-		{
-			MethodName: "CreateAttribute",
-			Handler:    _SyncerService_CreateAttribute_Handler,
-		},
-		{
-			MethodName: "UpdateAttribute",
-			Handler:    _SyncerService_UpdateAttribute_Handler,
+			MethodName: "PutAttribute",
+			Handler:    _SyncerService_PutAttribute_Handler,
 		},
 		{
 			MethodName: "DeleteAttribute",
 			Handler:    _SyncerService_DeleteAttribute_Handler,
 		},
 		{
-			MethodName: "CreatePermission",
-			Handler:    _SyncerService_CreatePermission_Handler,
+			MethodName: "CreatePolicy",
+			Handler:    _SyncerService_CreatePolicy_Handler,
 		},
 		{
-			MethodName: "DeletePermission",
-			Handler:    _SyncerService_DeletePermission_Handler,
+			MethodName: "DeletePolicy",
+			Handler:    _SyncerService_DeletePolicy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

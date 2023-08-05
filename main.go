@@ -34,7 +34,7 @@ func main() {
 	}
 	defer manager.Stop()
 
-	aclStore := neo4j.NewAclStore(manager, neo4j.NewCachedPermissionsCypherFactory())
+	aclStore := neo4j.NewAclStore(manager, neo4j.NewSimpleCypherFactory())
 	log.Println("STAAAAART")
 	c, err := gocache.NewGoCache(
 		cfg.Redis().Address(),

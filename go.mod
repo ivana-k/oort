@@ -11,6 +11,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.0
 	github.com/nats-io/nats.go v1.16.0
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.3
+	github.com/stretchr/testify v1.8.1
 	github.com/testcontainers/testcontainers-go v0.15.0
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.0
@@ -57,12 +58,11 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/stretchr/testify v1.8.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220719170305-83ca9fad585f // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect

@@ -11,7 +11,7 @@ type SyncerGrpcApi struct {
 	handler syncer.Handler
 }
 
-func NewSyncerGrpcApi(handler syncer.Handler) SyncerGrpcApi {
+func NewSyncerGrpcApi(handler syncer.Handler) syncerpb.SyncerServiceServer {
 	return SyncerGrpcApi{
 		handler: handler,
 	}
@@ -35,57 +35,30 @@ func (s SyncerGrpcApi) DeleteResource(ctx context.Context, req *syncerpb.DeleteR
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
-func (s SyncerGrpcApi) CreateAggregationRel(ctx context.Context, req *syncerpb.CreateAggregationRelReq) (*syncerpb.SyncResp, error) {
+func (s SyncerGrpcApi) CreateInheritanceRel(ctx context.Context, req *syncerpb.CreateInheritanceRelReq) (*syncerpb.SyncResp, error) {
 	request, err := req.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	resp := s.handler.CreateAggregationRelReq(request.(syncer.CreateAggregationRelReq))
+	resp := s.handler.CreateInheritanceRel(request.(syncer.CreateInheritanceRelReq))
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
-func (s SyncerGrpcApi) DeleteAggregationRel(ctx context.Context, req *syncerpb.DeleteAggregationRelReq) (*syncerpb.SyncResp, error) {
+func (s SyncerGrpcApi) DeleteInheritanceRel(ctx context.Context, req *syncerpb.DeleteInheritanceRelReq) (*syncerpb.SyncResp, error) {
 	request, err := req.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	resp := s.handler.DeleteAggregationRelReq(request.(syncer.DeleteAggregationRelReq))
+	resp := s.handler.DeleteInheritanceRel(request.(syncer.DeleteInheritanceRelReq))
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
-func (s SyncerGrpcApi) CreateCompositionRel(ctx context.Context, req *syncerpb.CreateCompositionRelReq) (*syncerpb.SyncResp, error) {
+func (s SyncerGrpcApi) PutAttribute(ctx context.Context, req *syncerpb.PutAttributeReq) (*syncerpb.SyncResp, error) {
 	request, err := req.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	resp := s.handler.CreateCompositionRelReq(request.(syncer.CreateCompositionRelReq))
-	return &syncerpb.SyncResp{}, resp.Error
-}
-
-func (s SyncerGrpcApi) DeleteCompositionRel(ctx context.Context, req *syncerpb.DeleteCompositionRelReq) (*syncerpb.SyncResp, error) {
-	request, err := req.MapToDomain()
-	if err != nil {
-		return nil, err
-	}
-	resp := s.handler.DeleteCompositionRelReq(request.(syncer.DeleteCompositionRelReq))
-	return &syncerpb.SyncResp{}, resp.Error
-}
-
-func (s SyncerGrpcApi) CreateAttribute(ctx context.Context, req *syncerpb.CreateAttributeReq) (*syncerpb.SyncResp, error) {
-	request, err := req.MapToDomain()
-	if err != nil {
-		return nil, err
-	}
-	resp := s.handler.CreateAttribute(request.(syncer.CreateAttributeReq))
-	return &syncerpb.SyncResp{}, resp.Error
-}
-
-func (s SyncerGrpcApi) UpdateAttribute(ctx context.Context, req *syncerpb.UpdateAttributeReq) (*syncerpb.SyncResp, error) {
-	request, err := req.MapToDomain()
-	if err != nil {
-		return nil, err
-	}
-	resp := s.handler.UpdateAttribute(request.(syncer.UpdateAttributeReq))
+	resp := s.handler.PutAttribute(request.(syncer.PutAttributeReq))
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
@@ -98,20 +71,20 @@ func (s SyncerGrpcApi) DeleteAttribute(ctx context.Context, req *syncerpb.Delete
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
-func (s SyncerGrpcApi) CreatePermission(ctx context.Context, req *syncerpb.CreatePermissionReq) (*syncerpb.SyncResp, error) {
+func (s SyncerGrpcApi) CreatePolicy(ctx context.Context, req *syncerpb.CreatePolicyReq) (*syncerpb.SyncResp, error) {
 	request, err := req.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	resp := s.handler.CreatePermission(request.(syncer.CreatePermissionReq))
+	resp := s.handler.CreatePolicy(request.(syncer.CreatePolicyReq))
 	return &syncerpb.SyncResp{}, resp.Error
 }
 
-func (s SyncerGrpcApi) DeletePermission(ctx context.Context, req *syncerpb.DeletePermissionReq) (*syncerpb.SyncResp, error) {
+func (s SyncerGrpcApi) DeletePolicy(ctx context.Context, req *syncerpb.DeletePolicyReq) (*syncerpb.SyncResp, error) {
 	request, err := req.MapToDomain()
 	if err != nil {
 		return nil, err
 	}
-	resp := s.handler.DeletePermission(request.(syncer.DeletePermissionReq))
+	resp := s.handler.DeletePolicy(request.(syncer.DeletePolicyReq))
 	return &syncerpb.SyncResp{}, resp.Error
 }

@@ -5,239 +5,192 @@ import (
 	"github.com/c12s/oort/domain/store/acl"
 )
 
-type cypherFactory interface {
-	createResourceCypher(req acl.CreateResourceReq) (string, map[string]interface{})
-	deleteResourceCypher(req acl.DeleteResourceReq) (string, map[string]interface{})
-	getResourceCypher(req acl.GetResourceReq) (string, map[string]interface{})
-	createAttributeCypher(req acl.CreateAttributeReq) (string, map[string]interface{})
-	updateAttributeCypher(req acl.UpdateAttributeReq) (string, map[string]interface{})
-	deleteAttributeCypher(req acl.DeleteAttributeReq) (string, map[string]interface{})
-	createAggregationRelCypher(req acl.CreateAggregationRelReq) (string, map[string]interface{})
-	deleteAggregationRelCypher(req acl.DeleteAggregationRelReq) (string, map[string]interface{})
-	createCompositionRelCypher(req acl.CreateCompositionRelReq) (string, map[string]interface{})
-	deleteCompositionRelCypher(req acl.DeleteCompositionRelReq) (string, map[string]interface{})
-	createPermissionCypher(req acl.CreatePermissionReq) (string, map[string]interface{})
-	deletePermissionCypher(req acl.DeletePermissionReq) (string, map[string]interface{})
-	getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{})
+type CypherFactory interface {
+	createResource(req acl.CreateResourceReq) (string, map[string]interface{})
+	deleteResource(req acl.DeleteResourceReq) (string, map[string]interface{})
+	getResource(req acl.GetResourceReq) (string, map[string]interface{})
+	putAttribute(req acl.PutAttributeReq) (string, map[string]interface{})
+	deleteAttribute(req acl.DeleteAttributeReq) (string, map[string]interface{})
+	createInheritanceRel(req acl.CreateInheritanceRelReq) (string, map[string]interface{})
+	deleteInheritanceRel(req acl.DeleteInheritanceRelReq) (string, map[string]interface{})
+	createPolicy(req acl.CreatePolicyReq) (string, map[string]interface{})
+	deletePolicy(req acl.DeletePolicyReq) (string, map[string]interface{})
+	getEffectivePermissionsWithPriority(req acl.GetPermissionHierarchyReq) (string, map[string]interface{})
 }
 
-type nonCachedPermissionsCypherFactory struct {
+type simpleCypherFactory struct {
 }
 
-func NewNonCachedPermissionsCypherFactory() cypherFactory {
-	return &nonCachedPermissionsCypherFactory{}
+func NewSimpleCypherFactory() CypherFactory {
+	return &simpleCypherFactory{}
 }
 
-const ncCreateResourceQuery = `
+const ncCreateResourceCypher = `
 MERGE (r:Resource{name: $name})
 MERGE (root:Resource{name: $rootName})
-MERGE (root)-[:Includes{kind: $composition}]->(r)
+MERGE (r)-[:INHERITS_FROM]->(root)
 `
 
-func (f nonCachedPermissionsCypherFactory) createResourceCypher(req acl.CreateResourceReq) (string, map[string]interface{}) {
-	return ncCreateResourceQuery,
+func (f simpleCypherFactory) createResource(req acl.CreateResourceReq) (string, map[string]interface{}) {
+	return ncCreateResourceCypher,
 		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"rootName":    model.RootResource.Name(),
-			"composition": model.CompositionRelationship}
+			"name":     req.Resource.Name(),
+			"rootName": model.RootResource.Name()}
 }
 
-const ncDeleteResourceQuery = `
+const ncDeleteResourceCypher = `
 MATCH (r:Resource{name: $name})
 WITH r
-// nadji sve resurse za brisanje
+// delete all attributes of r
 CALL {
     WITH r
-    OPTIONAL MATCH (r)-[:Includes*{kind: $composition}]->(d:Resource)
-    RETURN collect(d) + collect(r) AS delRes
-}
-// obrisi sve atribute resursa za brisanje
-CALL {
-    WITH delRes
-    UNWIND delRes AS r
-    MATCH (r)-[:Includes{kind: $composition}]->(a:Attribute)
+    MATCH (r)-[:HAS]->(a:Attribute)
     DETACH DELETE a
 }
-// obrisi sve direktno dodeljene dozvole resursa za brisanje
+// delete all directly assigned permissions of r
 CALL {
-    WITH delRes
-    UNWIND delRes AS r
-    MATCH (r)-[:Has|On]-(p:Permission)
+    WITH r
+    MATCH (r)-[:HAS|ON]-(p:Permission)
     DETACH DELETE p
 }
-// obrisi resurse
+// delete r
 CALL {
-    WITH delRes
-    UNWIND delRes AS r
+    WITH r
     DETACH DELETE r
 }
 `
 
-func (f nonCachedPermissionsCypherFactory) deleteResourceCypher(req acl.DeleteResourceReq) (string, map[string]interface{}) {
-	return ncDeleteResourceQuery,
+func (f simpleCypherFactory) deleteResource(req acl.DeleteResourceReq) (string, map[string]interface{}) {
+	return ncDeleteResourceCypher,
 		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
+			"name": req.Resource.Name()}
 }
 
-const ncGetResourceQuery = `
+const ncGetResourceCypher = `
 MATCH (resource:Resource{name: $name})
-OPTIONAL MATCH (attr:Attribute)<-[:Includes{kind: $composition}]-(resource)
+OPTIONAL MATCH (attr:Attribute)<-[:HAS]-(resource)
 RETURN resource.name, collect(properties(attr)) as attrs
 `
 
-func (f nonCachedPermissionsCypherFactory) getResourceCypher(req acl.GetResourceReq) (string, map[string]interface{}) {
-	return ncGetResourceQuery,
+func (f simpleCypherFactory) getResource(req acl.GetResourceReq) (string, map[string]interface{}) {
+	return ncGetResourceCypher,
 		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"composition": model.CompositionRelationship}
+			"name": req.Resource.Name()}
 }
 
-const ncCreateAttributeQuery = `
-MATCH (r:Resource{name: $name})
-WHERE NOT ((r)-[:Includes{kind: $composition}]->(:Attribute{name: $attrName}))
-CREATE (r)-[:Includes{kind: $composition}]->(:Attribute{name: $attrName, kind: $attrKind, value: $attrValue})
+const ncPutAttributeCypher = `
+MERGE (r:Resource{name: $name})
+MERGE (root:Resource{name: $rootName})
+MERGE (r)-[:INHERITS_FROM]->(root)
+MERGE ((r)-[:HAS]->(a:Attribute{name: $attrName}))
+SET a += {kind: $attrKind, value: $ attrValue}
 `
 
-func (f nonCachedPermissionsCypherFactory) createAttributeCypher(req acl.CreateAttributeReq) (string, map[string]interface{}) {
-	return ncCreateAttributeQuery,
+func (f simpleCypherFactory) putAttribute(req acl.PutAttributeReq) (string, map[string]interface{}) {
+	return ncPutAttributeCypher,
 		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.Attribute.Name(),
-			"attrKind":    req.Attribute.Kind(),
-			"attrValue":   req.Attribute.Value(),
-			"composition": model.CompositionRelationship}
+			"name":      req.Resource.Name(),
+			"rootName":  model.RootResource.Name(),
+			"attrName":  req.Attribute.Name(),
+			"attrKind":  req.Attribute.Kind(),
+			"attrValue": req.Attribute.Value()}
 }
 
-const ncUpdateAttributeQuery = `
-MATCH ((:Resource{name: $name})-[:Includes{kind: $composition}]->(a:Attribute{name: $attrName, kind: $attrKind}))
-SET a.value = $attrValue
-`
-
-func (f nonCachedPermissionsCypherFactory) updateAttributeCypher(req acl.UpdateAttributeReq) (string, map[string]interface{}) {
-	return ncUpdateAttributeQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.Attribute.Name(),
-			"attrKind":    req.Attribute.Kind(),
-			"attrValue":   req.Attribute.Value(),
-			"composition": model.CompositionRelationship}
-}
-
-const ncDeleteAttributeQuery = `
-MATCH ((:Resource{name: $name})-[:Includes{kind: $composition}]->(a:Attribute{name: $attrName}))
+const ncDeleteAttributeCypher = `
+MATCH ((:Resource{name: $name})-[:HAS]->(a:Attribute{name: $attrName}))
 DETACH DELETE a
 `
 
-func (f nonCachedPermissionsCypherFactory) deleteAttributeCypher(req acl.DeleteAttributeReq) (string, map[string]interface{}) {
-	return ncDeleteAttributeQuery,
+func (f simpleCypherFactory) deleteAttribute(req acl.DeleteAttributeReq) (string, map[string]interface{}) {
+	return ncDeleteAttributeCypher,
 		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.AttributeId,
-			"composition": model.CompositionRelationship}
+			"name":     req.Resource.Name(),
+			"attrName": req.AttributeId}
 }
 
-const ncCreateRelQuery = `
-MATCH (parent:Resource{name: $parentName})
-MATCH (child:Resource{name: $childName})
-WHERE NOT (parent)-[:Includes]->(child) AND NOT (child)-[:Includes*]->(parent)
-CREATE (parent)-[:Includes{kind: $relKind}]->(child)
+const ncCreateInheritanceRelCypher = `
+MERGE (from:Resource{name: $fromName})
+MERGE (to:Resource{name: $toName})
+MERGE (root:Resource{name: $rootName})
+MERGE (from)-[:INHERITS_FROM]->(root)
+MERGE (to)-[:INHERITS_FROM]->(root)
+WHERE NOT (to)-[:INHERITS_FROM]->(from) AND NOT (from)-[:INHERITS_FROM*]->(to)
+CREATE (to)-[:INHERITS_FROM]->(from)
 `
 
-func (f nonCachedPermissionsCypherFactory) createAggregationRelCypher(req acl.CreateAggregationRelReq) (string, map[string]interface{}) {
-	return ncCreateRelQuery,
+func (f simpleCypherFactory) createInheritanceRel(req acl.CreateInheritanceRelReq) (string, map[string]interface{}) {
+	return ncCreateInheritanceRelCypher,
 		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.AggregateRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
+			"fromName": req.From.Name(),
+			"toName":   req.To.Name(),
+			"rootName": model.RootResource.Name()}
 }
 
-const ncDeleteRelQuery = `
-MATCH (parent:Resource{name: $parentName})-[includes:Includes{kind: $relKind}]->(child:Resource{name: $childName})
-DELETE includes
+const ncDeleteInheritanceRelCypher = `
+MATCH (:Resource{name: toName})-[rel:INHERITS_FROM]->(:Resource{name: fromName})
+DELETE rel
 `
 
-func (f nonCachedPermissionsCypherFactory) deleteAggregationRelCypher(req acl.DeleteAggregationRelReq) (string, map[string]interface{}) {
-	return ncDeleteRelQuery,
+func (f simpleCypherFactory) deleteInheritanceRel(req acl.DeleteInheritanceRelReq) (string, map[string]interface{}) {
+	return ncDeleteInheritanceRelCypher,
 		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.AggregateRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
+			"fromName": req.From.Name(),
+			"toName":   req.To.Name(),
+			"rootName": model.RootResource.Name()}
 }
 
-func (f nonCachedPermissionsCypherFactory) createCompositionRelCypher(req acl.CreateCompositionRelReq) (string, map[string]interface{}) {
-	return ncCreateRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.CompositionRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-func (f nonCachedPermissionsCypherFactory) deleteCompositionRelCypher(req acl.DeleteCompositionRelReq) (string, map[string]interface{}) {
-	return ncDeleteRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.CompositionRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-const ncCreatePermissionQuery = `
-MATCH (sub:Resource{name: $subName})
-MATCH (obj:Resource{name: $objName})
-WHERE NOT ((sub)-[:Has]->(:Permission{name: $permName, kind: $permKind})-[:On]->(obj))
-CREATE (sub)-[:Has]->(:Permission{name: $permName, kind: $permKind, condition: $permCond})-[:On]->(obj)
+const ncCreatePermissionCypher = `
+MERGE (sub:Resource{name: $subName})
+MERGE (obj:Resource{name: $objName})
+MERGE (root:Resource{name: $rootName})
+MERGE (sub)-[:INHERITS_FROM]->(root)
+MERGE (obj)-[:INHERITS_FROM]->(root)
+MERGE ((sub)-[:HAS]->(p:Permission{name: $permName, kind: $permKind})-[:ON]->(obj))
+SET p.condition = $permCond
 `
 
-func (f nonCachedPermissionsCypherFactory) createPermissionCypher(req acl.CreatePermissionReq) (string, map[string]interface{}) {
-	return ncCreatePermissionQuery,
+func (f simpleCypherFactory) createPolicy(req acl.CreatePolicyReq) (string, map[string]interface{}) {
+	return ncCreatePermissionCypher,
 		map[string]interface{}{
-			"subName":  req.Subject.Name(),
-			"objName":  req.Object.Name(),
+			"subName":  req.SubjectScope.Name(),
+			"objName":  req.ObjectScope.Name(),
+			"rootName": model.RootResource.Name(),
 			"permName": req.Permission.Name(),
 			"permKind": req.Permission.Kind(),
 			"permCond": req.Permission.Condition().Expression()}
 }
 
-const ncDeletePermissionQuery = `
+const ncDeletePermissionCypher = `
 MATCH (sub:Resource{name: $subName})
 MATCH (obj:Resource{name: $objName})
-MATCH ((sub)-[:Has]->(p:Permission{name: $permName, kind: $permKind})-[:On]->(obj))
+MATCH ((sub)-[:HAS]->(p:Permission{name: $permName, kind: $permKind})-[:ON]->(obj))
 DETACH DELETE p
 `
 
-func (f nonCachedPermissionsCypherFactory) deletePermissionCypher(req acl.DeletePermissionReq) (string, map[string]interface{}) {
-	return ncDeletePermissionQuery,
+func (f simpleCypherFactory) deletePolicy(req acl.DeletePolicyReq) (string, map[string]interface{}) {
+	return ncDeletePermissionCypher,
 		map[string]interface{}{
-			"subName":  req.Subject.Name(),
-			"objName":  req.Object.Name(),
+			"subName":  req.SubjectScope.Name(),
+			"objName":  req.ObjectScope.Name(),
 			"permName": req.Permission.Name(),
 			"permKind": req.Permission.Kind()}
 }
 
-const ncGetPermissionsQuery = `
-OPTIONAL MATCH (sub:Resource{name: $subName})<-[:Includes*0..]-(subParent:Resource)-[:Has]->
-(p:Permission{name: $permName})-[:On]->(objParent:Resource)-[:Includes*0..]->(obj:Resource{name: $objName})
+const ncGetPermissionsCypher = `
+OPTIONAL MATCH (sub:Resource{name: $subName})-[:INHERITS_FROM*0..]->(subParent:Resource)-[:HAS]->
+(p:Permission{name: $permName})-[:ON]->(objParent:Resource)<-[:INHERITS_FROMs*0..]-(obj:Resource{name: $objName})
 WHERE sub IS NOT null AND obj IS NOT null AND p IS NOT null
 WITH p, sub, subParent, obj, objParent
 CALL {
 	WITH sub, subParent
-	MATCH path=(sub)<-[:Includes*0..100]-(subParent)
+	MATCH path=(sub)-[:INHERITS_FROM*0..100]->(subParent)
 	RETURN -length(path) AS subPriority
 	ORDER BY subPriority ASC
 	LIMIT 1
 }
 CALL {
 	WITH obj, objParent
-	MATCH path=(obj)<-[:Includes*0..100]-(objParent)
+	MATCH path=(obj)-[:INHERITS_FROM*0..100]->(objParent)
 	RETURN -length(path) AS objPriority
 	ORDER BY objPriority ASC
 	LIMIT 1
@@ -245,361 +198,303 @@ CALL {
 RETURN p.name, p.kind, p.condition, subPriority, objPriority
 `
 
-func (f nonCachedPermissionsCypherFactory) getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
-	return ncGetPermissionsQuery,
+func (f simpleCypherFactory) getEffectivePermissionsWithPriority(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
+	return ncGetPermissionsCypher,
 		map[string]interface{}{
 			"subName":  req.Subject.Name(),
 			"objName":  req.Object.Name(),
 			"permName": req.PermissionName}
 }
 
-type cachedPermissionsCypherFactory struct {
-}
+// todo: sredi ovo
+//type cachedPermsCypherFactory struct {
+//}
+//
+//func NewCachedPermsCypherFactory() cypherFactory {
+//	return &cachedPermsCypherFactory{}
+//}
+//
+//const cCreateResourceCypher = `
+//MERGE (r:Resource{name: $name})
+//MERGE (root:Resource{name: $rootName})
+//MERGE (r)-[:INHERITS_FROM]->(root)
+//WITH r, root
+//// store perms that r inherits from root
+//CALL {
+//	WITH r, root
+//	MATCH (root)-[srel:HAS]->(p:Permission)
+//	MERGE (r)-[:HAS{priority: srel.priority - 1}]->(p)
+//}
+//CALL {
+//	WITH r, root
+//	MATCH (root)<-[orel:ON]-(p:Permission)
+//	MERGE (r)<-[:On{priority: orel.priority - 1}]-(p)
+//}
+//`
+//
+//func (f cachedPermsCypherFactory) createResourceCypher(req acl.CreateResourceReq) (string, map[string]interface{}) {
+//	return cCreateResourceCypher,
+//		map[string]interface{}{
+//			"name":     req.Resource.Name(),
+//			"rootName": model.RootResource.Name()}
+//}
+//
+//const cDeleteResourceCypher = `
+//MATCH (r:Resource{name: $name})
+//WITH r
+//// obrisi sve atribute resursa za brisanje
+//CALL {
+//   WITH r
+//   MATCH (r)-[:HAS]->(a:Attribute)
+//   DETACH DELETE a
+//}
+//// obrisi sve direktno dodeljene dozvole resursa za brisanje
+//CALL {
+//   WITH r
+//   MATCH (r)-[:HAS|ON{priority: 0}]-(p:Permission{})
+//   DETACH DELETE p
+//}
+//// nadji sve resurse kojima treba ukloniti dozvole
+//CALL {
+//   WITH r
+//   MATCH (d:Resource)-[:INHERITS_FROM*]->(r)
+//   RETURN collect(d) AS descendants
+//}
+//// ukloni nasledjene dozvole iz potomaka
+//CALL {
+//   WITH r, descendants
+//   UNWIND descendants AS d
+//   // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - subjekat
+//   CALL {
+//     WITH r, d
+//     MATCH path=(d)-[:INHERITS_FROM*]->(:Resource)-[:HAS{priority: 0}]->(perm:Permission)
+//     WHERE ANY(resOnPath IN NODES(path) WHERE resOnPath = r)
+//     MATCH ((d)-[srel:HAS{priority: -(length(path)-1)}]->(perm))
+//     WITH collect(srel) AS dels
+//     UNWIND dels[..1] AS del
+//     DELETE del
+//   }
+//   // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - objekat
+//   CALL {
+//     WITH r, d
+//     MATCH path=(d)-[:INHERITS_FROM*]->(:Resource)<-[:ON{priority: 0}]-(perm:Permission)
+//     WHERE ANY(resOnPath IN NODES(path) WHERE resOnPath = r)
+//     MATCH ((d)<-[orel:ON{priority: -(length(path)-1)}]-(perm))
+//     WITH collect(orel) AS dels
+//     UNWIND dels[..1] AS del
+//     DELETE del
+//   }
+//}
+//// obrisi resurs
+//CALL {
+//   WITH r
+//   DETACH DELETE r
+//}
+//`
+//
+//func (f cachedPermsCypherFactory) deleteResourceCypher(req acl.DeleteResourceReq) (string, map[string]interface{}) {
+//	return cDeleteResourceCypher,
+//		map[string]interface{}{
+//			"name": req.Resource.Name()}
+//}
+//
+//const cGetResourceCypher = ncGetResourceCypher
+//
+//func (f cachedPermsCypherFactory) getResource(req acl.GetResourceReq) (string, map[string]interface{}) {
+//	return cGetResourceCypher,
+//		map[string]interface{}{
+//			"name": req.Resource.Name()}
+//}
+//
+//const cPutAttributeCypher = ncPutAttributeCypher
+//
+//func (f cachedPermsCypherFactory) putAttribute(req acl.PutAttributeReq) (string, map[string]interface{}) {
+//	return cPutAttributeCypher,
+//		map[string]interface{}{
+//			"name":      req.Resource.Name(),
+//			"rootName":  model.RootResource.Name(),
+//			"attrName":  req.Attribute.Name(),
+//			"attrKind":  req.Attribute.Kind(),
+//			"attrValue": req.Attribute.Value()}
+//}
+//
+//const cDeleteAttributeCypher = ncDeleteAttributeCypher
+//
+//func (f cachedPermsCypherFactory) deleteAttribute(req acl.DeleteAttributeReq) (string, map[string]interface{}) {
+//	return cDeleteAttributeCypher,
+//		map[string]interface{}{
+//			"name":     req.Resource.Name(),
+//			"attrName": req.AttributeId}
+//}
+//
+//const cCreateInheritanceRelCypher = `
+//MERGE (from:Resource{name: $fromName})
+//MERGE (to:Resource{name: $toName})
+//MERGE (root:Resource{name: $rootName})
+//MERGE (from)-[:INHERITS_FROM]->(root)
+//MERGE (to)-[:INHERITS_FROM]->(root)
+//WHERE NOT (from)-[:INHERITS_FROM]->(to) AND NOT (to)-[:INHERITS_FROM*]->(from)
+//// create relationship
+//CREATE (from)-[newRel:INHERITS_FROM]->(to)
+//// find nwwly inherited permissions
+//WITH from, newRel
+//CALL {
+//   WITH from
+//   MATCH (from)-[srel:HAS|ON]-(p:Permission)
+//   RETURN collect({priority: srel.priority, type: type(srel), permission: p}) AS rels
+//}
+//// find new paths from 'from' resource
+//CALL {
+//   WITH from, newRel
+//   MATCH path=(from)-[:INHERITS_FROM*]->(d:Resource)
+//   WHERE newRel in RELATIONSHIPS(path)
+//   RETURN collect(path) AS newPaths
+//}
+////  assign permissions to descendants
+//CALL {
+//   WITH newPaths, rels
+//   UNWIND newPaths AS newPath
+//   WITH last(nodes(newPath)) AS res, length(newPath) AS dist, rels AS policies
+//   UNWIND policies AS policy
+//   WITH policy.priority AS priority, policy.type AS type, policy.permission AS policy, res, dist
+//   FOREACH (i in CASE WHEN type = "HAS" THEN [1] ELSE [] END |
+//       CREATE (res)-[:Has{priority: priority - dist}]->(policy)
+//   )
+//   FOREACH (i in CASE WHEN type = "ON" THEN [1] ELSE [] END |
+//       CREATE (res)<-[:On{priority: priority - dist}]-(policy)
+//   )
+//}
+//`
+//
+//func (f cachedPermsCypherFactory) createInheritanceRelCypher(req acl.CreateInheritanceRelReq) (string, map[string]interface{}) {
+//	return cCreateInheritanceRelCypher,
+//		map[string]interface{}{
+//			"fromName": req.From.Name(),
+//			"toName":   req.To.Name(),
+//			"rootName": model.RootResource.Name()}
+//}
+//
+//const cDeleteINheritanceRelCypher = `
+//MATCH (from:Resource{name: $fromName})-[includes:INHERITS_FROM]->(:Resource{name: $toName})
+//WITH from, includes
+//// nadji sve dozvole koje ima roditelj (kao subjekat)
+//CALL {
+//   WITH parent
+//   MATCH (parent)-[rel:Has]->(p:Permission)
+//   RETURN collect({permission: p, priority: rel.priority}) AS subPermissions
+//}
+//// nadji sve dozvole koje ima roditelj (kao objekat)
+//CALL {
+//   WITH parent
+//   MATCH (parent)<-[rel:On]-(p:Permission)
+//   RETURN collect({permission: p, priority: rel.priority}) AS objPermissions
+//}
+//// pronadji sve putanje od roditelja koje ce biti prekinute
+//CALL {
+//   WITH parent, includes
+//   MATCH path=(parent)-[:Includes*]->(d:Resource)
+//   WHERE includes IN RELATIONSHIPS(path)
+//   RETURN collect(path) AS oldPaths
+//}
+//// obrisi sve nasledjene dozvole
+//CALL {
+//   WITH parent, subPermissions, objPermissions, oldPaths
+//   CALL {
+//       WITH parent, subPermissions, oldPaths
+//       UNWIND oldPaths AS oldPath
+//       WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, subPermissions
+//       UNWIND subPermissions AS policy
+//       WITH policy.priority AS priority, policy.permission AS permission, res, dist
+//       MATCH (res)-[rrel:Has{priority: priority - dist}]->(permission)
+//       WITH permission, rrel.priority as priority, collect(rrel) AS del
+//       UNWIND del[..1] AS d
+//       DELETE d
+//   }
+//   CALL {
+//       WITH parent, objPermissions, oldPaths
+//       UNWIND oldPaths AS oldPath
+//       WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, objPermissions
+//       UNWIND objPermissions AS policy
+//       WITH policy.priority AS priority, policy.permission AS permission, res, dist
+//       MATCH (res)<-[rrel:On{priority: priority - dist}]-(permission)
+//       WITH permission, rrel.priority as priority, collect(rrel) AS del
+//       UNWIND del[..1] AS d
+//       DELETE d
+//   }
+//}
+//// obrisi vezu izmedju roditelja i deteta
+//CALL {
+//   WITH includes
+//   DELETE includes
+//}
+//`
+//
+//func (f cachedPermissionsCypherFactory) deleteAggregationRelCypher(req acl.DeleteAggregationRelReq) (string, map[string]interface{}) {
+//	return cDeleteRelCypher,
+//		map[string]interface{}{
+//			"parentName":  req.Parent.Name(),
+//			"childName":   req.Child.Name(),
+//			"relKind":     model.AggregateRelationship,
+//			"composition": model.CompositionRelationship,
+//			"rootName":    model.RootResource.Name()}
+//}
 
-func NewCachedPermissionsCypherFactory() cypherFactory {
-	return &cachedPermissionsCypherFactory{}
-}
-
-const cCreateResourceQuery = `
-MERGE (r:Resource{name: $name})
-MERGE (root:Resource{name: $rootName})
-MERGE (root)-[:Includes{kind: $composition}]->(r)
-WITH r, root
-CALL {
-	WITH r, root
-	MATCH (root)-[srel:Has]->(p:Permission)
-	MERGE (r)-[:Has{priority: srel.prioriy - 1}]->(p)
-}
-CALL {
-	WITH r, root
-	MATCH (root)<-[orel:On]-(p:Permission)
-	MERGE (r)<-[:On{priority: orel.priority - 1}]-(p)
-}
-`
-
-func (f cachedPermissionsCypherFactory) createResourceCypher(req acl.CreateResourceReq) (string, map[string]interface{}) {
-	return cCreateResourceQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"rootName":    model.RootResource.Name(),
-			"composition": model.CompositionRelationship}
-}
-
-const cDeleteResourceCypher = `
-MATCH (r:Resource{name: $name})
-WITH r
-// nadji sve resurse za brisanje
-CALL {
-    WITH r
-    OPTIONAL MATCH (r)-[:Includes*{kind: $composition}]->(d:Resource)
-    RETURN collect(d) + collect(r) AS delRes
-}
-// obrisi sve atribute resursa za brisanje
-CALL {
-    WITH delRes
-    UNWIND delRes AS r
-    MATCH (r)-[:Includes{kind: $composition}]->(a:Attribute)
-    DETACH DELETE a
-}
-// obrisi sve direktno dodeljene dozvole resursa za brisanje
-CALL {
-    WITH delRes
-    UNWIND delRes AS r
-    MATCH (r)-[:Has|On{priority: 0}]-(p:Permission{})
-    DETACH DELETE p
-}
-// nadji sve resurse kojima treba ukloniti dozvole
-CALL {
-    WITH delRes
-    MATCH (p:Resource)-[:Includes*]->(c:Resource)
-    WHERE p IN delRes AND NOT c IN delRes
-    RETURN collect(p) AS permRes
-}
-// ukloni nasledjene dozvole iz potomaka
-CALL {
-    WITH permRes, delRes
-    UNWIND permRes AS res
-    // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - subjekat
-    CALL {
-      WITH res, delRes
-      MATCH path=(res)<-[:Includes*]-(parent:Resource)-[:Has{priority: 0}]->(perm:Permission)
-      WHERE ANY(pathRes IN NODES(path) WHERE pathRes IN delRes)
-      MATCH ((res)-[srel:Has{priority: -(length(path)-1)}]->(perm))
-      WITH collect(srel) AS del
-      UNWIND del[..1] AS d
-      DELETE d
-    }
-    // nadji i obrisi sve putanje resursa do direktno dodeljene dozvole - objekat
-    CALL {
-      WITH res, delRes
-      MATCH path=(res)<-[:Includes*]-(parent:Resource)<-[:On{priority: 0}]-(perm:Permission)
-      WHERE ANY(pathRes IN NODES(path) WHERE pathRes IN delRes)
-      MATCH ((res)<-[orel:On{priority: -(length(path)-1)}]-(perm))
-      WITH collect(orel) AS del
-      UNWIND del[..1] AS d
-      DELETE d
-    }
-}
-// obrisi resurse
-CALL {
-    WITH delRes
-    UNWIND delRes AS r
-    DETACH DELETE r
-}
-`
-
-func (f cachedPermissionsCypherFactory) deleteResourceCypher(req acl.DeleteResourceReq) (string, map[string]interface{}) {
-	return cDeleteResourceCypher,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-const cGetResourceQuery = `
-MATCH (resource:Resource{name: $name})
-OPTIONAL MATCH (attr:Attribute)<-[:Includes{kind: $composition}]-(resource)
-RETURN resource.name, collect(properties(attr)) as attrs
-`
-
-func (f cachedPermissionsCypherFactory) getResourceCypher(req acl.GetResourceReq) (string, map[string]interface{}) {
-	return cGetResourceQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"composition": model.CompositionRelationship}
-}
-
-const cCreateAttributeQuery = `
-MATCH (r:Resource{name: $name})
-WHERE NOT ((r)-[:Includes{kind: $composition}]->(:Attribute{name: $attrName}))
-CREATE (r)-[:Includes{kind: $composition}]->(:Attribute{name: $attrName, kind: $attrKind, value: $attrValue})
-`
-
-func (f cachedPermissionsCypherFactory) createAttributeCypher(req acl.CreateAttributeReq) (string, map[string]interface{}) {
-	return cCreateAttributeQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.Attribute.Name(),
-			"attrKind":    req.Attribute.Kind(),
-			"attrValue":   req.Attribute.Value(),
-			"composition": model.CompositionRelationship}
-}
-
-const cUpdateAttributeQuery = `
-MATCH ((:Resource{name: $name})-[:Includes{kind: $composition}]->(a:Attribute{name: $attrName, kind: $attrKind}))
-SET a.value = $attrValue
-`
-
-func (f cachedPermissionsCypherFactory) updateAttributeCypher(req acl.UpdateAttributeReq) (string, map[string]interface{}) {
-	return cUpdateAttributeQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.Attribute.Name(),
-			"attrKind":    req.Attribute.Kind(),
-			"attrValue":   req.Attribute.Value(),
-			"composition": model.CompositionRelationship}
-}
-
-const cDeleteAttributeQuery = `
-MATCH ((:Resource{name: $name})-[:Includes{kind: $composition}]->(a:Attribute{name: $attrName}))
-DETACH DELETE a
-`
-
-func (f cachedPermissionsCypherFactory) deleteAttributeCypher(req acl.DeleteAttributeReq) (string, map[string]interface{}) {
-	return cDeleteAttributeQuery,
-		map[string]interface{}{
-			"name":        req.Resource.Name(),
-			"attrName":    req.AttributeId,
-			"composition": model.CompositionRelationship}
-}
-
-const cCreateRelQuery = `
-MATCH (parent:Resource{name: $parentName})
-MATCH (child:Resource{name: $childName})
-WHERE NOT (parent)-[:Includes]->(child) AND NOT (child)-[:Includes*]->(parent)
-// kreiraj novy vezu
-CREATE (parent)-[newRel:Includes{kind: $relKind}]->(child)
-// nadji sve dozvole koje treba da se naslede
-WITH parent, newRel
-CALL {
-    WITH parent
-    MATCH (parent)-[srel:Has|On]-(p:Permission)
-    RETURN collect({priority: srel.priority, type: type(srel), permission: p}) AS rels
-}
-// nadji nove putanje od roditelja do potomaka
-CALL {
-    WITH parent, newRel
-    MATCH path=(parent)-[:Includes*]->(d:Resource)
-    WHERE newRel in RELATIONSHIPS(path)
-    RETURN collect(path) AS newPaths
-}
-//  dodeli dozvole potomcima na novim putanjama
-CALL {
-    WITH newPaths, rels
-    UNWIND newPaths AS newPath
-    WITH last(nodes(newPath)) AS res, length(newPath) AS dist, rels AS policies
-    UNWIND policies AS policy
-    WITH policy.priority AS priority, policy.type AS type, policy.permission AS policy, res, dist
-    FOREACH (i in CASE WHEN type = "Has" THEN [1] ELSE [] END |
-        CREATE (res)-[:Has{priority: priority - dist}]->(policy)
-    )
-    FOREACH (i in CASE WHEN type = "On" THEN [1] ELSE [] END |
-        CREATE (res)<-[:On{priority: priority - dist}]-(policy)
-    )
-}
-`
-
-func (f cachedPermissionsCypherFactory) createAggregationRelCypher(req acl.CreateAggregationRelReq) (string, map[string]interface{}) {
-	return cCreateRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.AggregateRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-const cDeleteRelQuery = `
-MATCH (parent:Resource{name: $parentName})-[includes:Includes{kind: $relKind}]->(child:Resource{name: $childName})
-WITH parent, includes
-// nadji sve dozvole koje ima roditelj (kao subjekat)
-CALL {
-    WITH parent
-    MATCH (parent)-[rel:Has]->(p:Permission)
-    RETURN collect({permission: p, priority: rel.priority}) AS subPermissions
-}
-// nadji sve dozvole koje ima roditelj (kao objekat)
-CALL {
-    WITH parent
-    MATCH (parent)<-[rel:On]-(p:Permission)
-    RETURN collect({permission: p, priority: rel.priority}) AS objPermissions
-}
-// pronadji sve putanje od roditelja koje ce biti prekinute
-CALL {
-    WITH parent, includes
-    MATCH path=(parent)-[:Includes*]->(d:Resource)
-    WHERE includes IN RELATIONSHIPS(path)
-    RETURN collect(path) AS oldPaths
-}
-// obrisi sve nasledjene dozvole
-CALL {
-    WITH parent, subPermissions, objPermissions, oldPaths
-    CALL {
-        WITH parent, subPermissions, oldPaths
-        UNWIND oldPaths AS oldPath
-        WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, subPermissions
-        UNWIND subPermissions AS policy
-        WITH policy.priority AS priority, policy.permission AS permission, res, dist
-        MATCH (res)-[rrel:Has{priority: priority - dist}]->(permission)
-        WITH permission, rrel.priority as priority, collect(rrel) AS del
-        UNWIND del[..1] AS d
-        DELETE d
-    }
-    CALL {
-        WITH parent, objPermissions, oldPaths
-        UNWIND oldPaths AS oldPath
-        WITH last(nodes(oldPath)) AS res, length(oldPath) AS dist, objPermissions
-        UNWIND objPermissions AS policy
-        WITH policy.priority AS priority, policy.permission AS permission, res, dist
-        MATCH (res)<-[rrel:On{priority: priority - dist}]-(permission)
-        WITH permission, rrel.priority as priority, collect(rrel) AS del
-        UNWIND del[..1] AS d
-        DELETE d
-    }
-}
-// obrisi vezu izmedju roditelja i deteta
-CALL {
-    WITH includes
-    DELETE includes
-}
-`
-
-func (f cachedPermissionsCypherFactory) deleteAggregationRelCypher(req acl.DeleteAggregationRelReq) (string, map[string]interface{}) {
-	return cDeleteRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.AggregateRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-func (f cachedPermissionsCypherFactory) createCompositionRelCypher(req acl.CreateCompositionRelReq) (string, map[string]interface{}) {
-	return cCreateRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.CompositionRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-func (f cachedPermissionsCypherFactory) deleteCompositionRelCypher(req acl.DeleteCompositionRelReq) (string, map[string]interface{}) {
-	return cDeleteRelQuery,
-		map[string]interface{}{
-			"parentName":  req.Parent.Name(),
-			"childName":   req.Child.Name(),
-			"relKind":     model.CompositionRelationship,
-			"composition": model.CompositionRelationship,
-			"rootName":    model.RootResource.Name()}
-}
-
-const cCreatePermissionQuery = `
-MATCH (sub:Resource{name: $subName})
-MATCH (obj:Resource{name: $objName})
-WHERE NOT (sub)-[:Has{priority: 0}]->(:Permission{name: $permName, kind: $permKind})-[:On{priority: 0}]->(obj)
-CREATE (sub)-[srel:Has{priority: 0}]->(p:Permission{name: $permName, kind: $permKind, condition: $permCond})-[orel:On{priority: 0}]->(obj)
-WITH sub, obj, p
-CALL {
-    WITH sub, p
-    MATCH path=((sub)-[:Includes*]->(descendant:Resource))
-    CREATE (descendant)-[:Has{priority: -length(path)}]->(p)
-}
-CALL {
-    WITH obj, p
-    MATCH path=((obj)-[:Includes*]->(descendant:Resource))
-    CREATE (descendant)<-[:On{priority: -length(path)}]-(p)
-}
-`
-
-func (f cachedPermissionsCypherFactory) createPermissionCypher(req acl.CreatePermissionReq) (string, map[string]interface{}) {
-	return cCreatePermissionQuery,
-		map[string]interface{}{
-			"subName":  req.Subject.Name(),
-			"objName":  req.Object.Name(),
-			"permName": req.Permission.Name(),
-			"permKind": req.Permission.Kind(),
-			"permCond": req.Permission.Condition().Expression()}
-}
-
-const cDeletePermissionQuery = `
-MATCH (sub:Resource{name: $subName})
-MATCH (obj:Resource{name: $objName})
-MATCH (sub)-[:Has{priority: 0}]->(p:Permission{name: $permName, kind: $permKind})-[:On{priority: 0}]->(obj)
-DETACH DELETE p
-`
-
-func (f cachedPermissionsCypherFactory) deletePermissionCypher(req acl.DeletePermissionReq) (string, map[string]interface{}) {
-	return cDeletePermissionQuery,
-		map[string]interface{}{
-			"subName":  req.Subject.Name(),
-			"objName":  req.Object.Name(),
-			"permName": req.Permission.Name(),
-			"permKind": req.Permission.Kind()}
-}
-
-const cGetPermissionsQuery = `
-MATCH (sub:Resource{name: $subName})
-MATCH (obj:Resource{name: $objName})
-MATCH (sub)-[srel:Has]->(p:Permission{name: $permName})-[orel:On]->(obj)
-WITH p, min(srel.priority) AS spriority, min(orel.priority) AS opriority
-RETURN p.name, p.kind, p.condition, spriority, opriority
-`
-
-func (f cachedPermissionsCypherFactory) getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
-	return cGetPermissionsQuery,
-		map[string]interface{}{
-			"subName":  req.Subject.Name(),
-			"objName":  req.Object.Name(),
-			"permName": req.PermissionName}
-}
+//const cCreatePermissionCypher = `
+//MATCH (sub:Resource{name: $subName})
+//MATCH (obj:Resource{name: $objName})
+//WHERE NOT (sub)-[:Has{priority: 0}]->(:Permission{name: $permName, kind: $permKind})-[:On{priority: 0}]->(obj)
+//CREATE (sub)-[srel:Has{priority: 0}]->(p:Permission{name: $permName, kind: $permKind, condition: $permCond})-[orel:On{priority: 0}]->(obj)
+//WITH sub, obj, p
+//CALL {
+//    WITH sub, p
+//    MATCH path=((sub)-[:Includes*]->(descendant:Resource))
+//    CREATE (descendant)-[:Has{priority: -length(path)}]->(p)
+//}
+//CALL {
+//    WITH obj, p
+//    MATCH path=((obj)-[:Includes*]->(descendant:Resource))
+//    CREATE (descendant)<-[:On{priority: -length(path)}]-(p)
+//}
+//`
+//
+//func (f cachedPermissionsCypherFactory) createPermissionCypher(req acl.CreatePermissionReq) (string, map[string]interface{}) {
+//	return cCreatePermissionCypher,
+//		map[string]interface{}{
+//			"subName":  req.Subject.Name(),
+//			"objName":  req.Object.Name(),
+//			"permName": req.Permission.Name(),
+//			"permKind": req.Permission.Kind(),
+//			"permCond": req.Permission.Condition().Expression()}
+//}
+//
+//const cDeletePermissionCypher = `
+//MATCH (sub:Resource{name: $subName})
+//MATCH (obj:Resource{name: $objName})
+//MATCH (sub)-[:Has{priority: 0}]->(p:Permission{name: $permName, kind: $permKind})-[:On{priority: 0}]->(obj)
+//DETACH DELETE p
+//`
+//
+//func (f cachedPermissionsCypherFactory) deletePermissionCypher(req acl.DeletePermissionReq) (string, map[string]interface{}) {
+//	return cDeletePermissionCypher,
+//		map[string]interface{}{
+//			"subName":  req.Subject.Name(),
+//			"objName":  req.Object.Name(),
+//			"permName": req.Permission.Name(),
+//			"permKind": req.Permission.Kind()}
+//}
+//
+//const cGetPermissionsCypher = `
+//MATCH (sub:Resource{name: $subName})
+//MATCH (obj:Resource{name: $objName})
+//MATCH (sub)-[srel:HAS]->(p:Permission{name: $permName})-[orel:ON]->(obj)
+//WITH p, min(srel.priority) AS spriority, min(orel.priority) AS opriority
+//RETURN p.name, p.kind, p.condition, spriority, opriority
+//`
+//
+//func (f cachedPermsCypherFactory) getEffectivePermissionsWithPriorityCypher(req acl.GetPermissionHierarchyReq) (string, map[string]interface{}) {
+//	return cGetPermissionsCypher,
+//		map[string]interface{}{
+//			"subName":  req.Subject.Name(),
+//			"objName":  req.Object.Name(),
+//			"permName": req.PermissionName}
+//}

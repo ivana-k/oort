@@ -14,39 +14,11 @@ type DeleteResourceReq struct {
 	Callback func(error) model.OutboxMessage
 }
 
-type GetAttributeReq struct {
-	Resource model.Resource
-}
-
-type GetPermissionHierarchyReq struct {
-	Subject,
-	Object model.Resource
-	PermissionName string
-}
-
 type GetResourceReq struct {
 	Resource model.Resource
 }
 
-type ConnectResourcesReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
-}
-
-type DisconnectResourcesReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
-}
-
-type CreateAttributeReq struct {
-	Resource  model.Resource
-	Attribute model.Attribute
-	Callback  func(error) model.OutboxMessage
-}
-
-type UpdateAttributeReq struct {
+type PutAttributeReq struct {
 	Resource  model.Resource
 	Attribute model.Attribute
 	Callback  func(error) model.OutboxMessage
@@ -58,40 +30,38 @@ type DeleteAttributeReq struct {
 	Callback    func(error) model.OutboxMessage
 }
 
-type CreateAggregationRelReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
+type GetAttributeReq struct {
+	Resource model.Resource
 }
 
-type DeleteAggregationRelReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
+type CreateInheritanceRelReq struct {
+	From     model.Resource
+	To       model.Resource
+	Callback func(err error) model.OutboxMessage
 }
 
-type CreateCompositionRelReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
+type DeleteInheritanceRelReq struct {
+	From     model.Resource
+	To       model.Resource
+	Callback func(err error) model.OutboxMessage
 }
 
-type DeleteCompositionRelReq struct {
-	Parent,
-	Child model.Resource
-	Callback func(error) model.OutboxMessage
-}
-
-type CreatePermissionReq struct {
-	Subject,
-	Object model.Resource
+type CreatePolicyReq struct {
+	SubjectScope,
+	ObjectScope model.Resource
 	Permission model.Permission
 	Callback   func(error) model.OutboxMessage
 }
 
-type DeletePermissionReq struct {
-	Subject,
-	Object model.Resource
+type DeletePolicyReq struct {
+	SubjectScope,
+	ObjectScope model.Resource
 	Permission model.Permission
 	Callback   func(error) model.OutboxMessage
+}
+
+type GetPermissionHierarchyReq struct {
+	Subject,
+	Object model.Resource
+	PermissionName string
 }

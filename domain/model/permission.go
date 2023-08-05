@@ -1,6 +1,8 @@
 package model
 
-import "sort"
+import (
+	"sort"
+)
 
 type PermissionKind int
 
@@ -20,9 +22,9 @@ const (
 const DefaultEvalResult = EvalResultDenied
 
 type PermissionEvalRequest struct {
-	Resource  []Attribute
-	Principal []Attribute
-	Env       []Attribute
+	Subject []Attribute
+	Object  []Attribute
+	Env     []Attribute
 }
 
 type Permission struct {
@@ -52,7 +54,7 @@ func (p Permission) Condition() Condition {
 }
 
 func (p Permission) eval(req PermissionEvalRequest) EvalResult {
-	if !p.condition.Eval(req.Principal, req.Resource, req.Env) {
+	if !p.condition.Eval(req.Subject, req.Object, req.Env) {
 		return EvalResultNonEvaluative
 	}
 	if p.kind == PermissionKindAllow {

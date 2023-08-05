@@ -24,23 +24,13 @@ func (r DeleteResourceReq) Id() string {
 	return r.ReqId
 }
 
-type CreateAttributeReq struct {
+type PutAttributeReq struct {
 	ReqId     string
 	Resource  model.Resource
 	Attribute model.Attribute
 }
 
-func (r CreateAttributeReq) Id() string {
-	return r.ReqId
-}
-
-type UpdateAttributeReq struct {
-	ReqId     string
-	Resource  model.Resource
-	Attribute model.Attribute
-}
-
-func (r UpdateAttributeReq) Id() string {
+func (r PutAttributeReq) Id() string {
 	return r.ReqId
 }
 
@@ -54,64 +44,44 @@ func (r DeleteAttributeReq) Id() string {
 	return r.ReqId
 }
 
-type CreateAggregationRelReq struct {
+type CreateInheritanceRelReq struct {
 	ReqId string
-	Parent,
-	Child model.Resource
+	From,
+	To model.Resource
 }
 
-func (r CreateAggregationRelReq) Id() string {
+func (r CreateInheritanceRelReq) Id() string {
 	return r.ReqId
 }
 
-type DeleteAggregationRelReq struct {
+type DeleteInheritanceRelReq struct {
 	ReqId string
-	Parent,
-	Child model.Resource
+	From,
+	To model.Resource
 }
 
-func (r DeleteAggregationRelReq) Id() string {
+func (r DeleteInheritanceRelReq) Id() string {
 	return r.ReqId
 }
 
-type CreateCompositionRelReq struct {
+type CreatePolicyReq struct {
 	ReqId string
-	Parent,
-	Child model.Resource
-}
-
-func (r CreateCompositionRelReq) Id() string {
-	return r.ReqId
-}
-
-type DeleteCompositionRelReq struct {
-	ReqId string
-	Parent,
-	Child model.Resource
-}
-
-func (r DeleteCompositionRelReq) Id() string {
-	return r.ReqId
-}
-
-type CreatePermissionReq struct {
-	ReqId string
-	Subject,
-	Object *model.Resource
+	SubjectScope,
+	ObjectScope *model.Resource
 	Permission model.Permission
 }
 
-func (r CreatePermissionReq) Id() string {
+func (r CreatePolicyReq) Id() string {
 	return r.ReqId
 }
 
-type DeletePermissionReq struct {
+type DeletePolicyReq struct {
 	ReqId string
-	Subject,
-	Object *model.Resource
+	SubjectScope,
+	ObjectScope *model.Resource
 	Permission model.Permission
 }
 
-func (r DeletePermissionReq) Id() string {
+func (r DeletePolicyReq) Id() string {
 	return r.ReqId
 }
