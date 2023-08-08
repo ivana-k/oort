@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+option go_package = "github.com/c12s/oort/pkg/proto";
+
+package proto;
+
+import "model.proto";
+
+service OortAdministrator {
+  rpc CreateResource(CreateResourceReq) returns (AdministrationResp) {}
+  rpc DeleteResource(DeleteResourceReq) returns (AdministrationResp) {}
+  rpc CreateInheritanceRel(CreateInheritanceRelReq) returns (AdministrationResp) {}
+  rpc DeleteInheritanceRel(DeleteInheritanceRelReq) returns (AdministrationResp) {}
+  rpc PutAttribute(PutAttributeReq) returns (AdministrationResp) {}
+  rpc DeleteAttribute(DeleteAttributeReq) returns (AdministrationResp) {}
+  rpc CreatePolicy(CreatePolicyReq) returns (AdministrationResp) {}
+  rpc DeletePolicy(DeletePolicyReq) returns (AdministrationResp) {}
+}
+
+message CreateResourceReq {
+  Resource resource = 1;
+  string id = 2;
+}
+
+message DeleteResourceReq {
+  Resource resource = 1;
+  string id = 2;
+}
+
+message CreateInheritanceRelReq {
+  Resource from = 1;
+  Resource to = 2;
+  string id = 3;
+}
+
+message DeleteInheritanceRelReq {
+  Resource from = 1;
+  Resource to = 2;
+  string id = 3;
+}
+
+message PutAttributeReq {
+  Resource resource = 1;
+  Attribute attribute = 2;
+  string id = 3;
+}
+
+message DeleteAttributeReq {
+  Resource resource = 1;
+  AttributeId attributeId = 2;
+  string id = 3;
+}
+
+message CreatePolicyReq {
+  Resource subjectScope = 1;
+  Resource objectScope = 2;
+  Permission permission = 3;
+  string id = 4;
+}
+
+message DeletePolicyReq {
+  Resource subjectScope = 1;
+  Resource objectScope = 2;
+  Permission permission = 3;
+  string id = 4;
+}
+
+message AdministrationReq {
+  enum ReqKind {
+      CreateResource = 0;
+      DeleteResource = 1;
+      PutAttribute = 2;
+      DeleteAttribute = 3;
+      CreateInheritanceRel = 4;
+      DeleteInheritanceRel = 5;
+      CreatePolicy = 6;
+      DeletePolicy = 7;
+  }
+  ReqKind kind = 1;
+  bytes reqMarshalled = 2;
+}
+
+message AdministrationResp {
+}
+
+//message AsyncSyncResp {
+//  string reqId = 1;
+//  bool successful = 2;
+//  string error = 3;
+//}

@@ -1,20 +1,20 @@
-protoc --proto_path=proto/common \
-	--go_out=proto/common \
+protoc --proto_path=pkg/proto \
+	--go_out=pkg/proto \
 	--go_opt=paths=source_relative \
-	--go-grpc_out=proto/common \
+	--go-grpc_out=pkg/proto \
 	--go-grpc_opt=paths=source_relative \
-	 common.proto
-protoc -I=proto/common \
-	--proto_path=proto/checkerpb \
-	--go_out=proto/checkerpb \
+	 model.proto
+protoc -I=pkg/proto \
+	--proto_path=pkg/proto \
+	--go_out=pkg/proto \
 	--go_opt=paths=source_relative \
-	--go-grpc_out=proto/checkerpb \
+	--go-grpc_out=pkg/proto \
 	--go-grpc_opt=paths=source_relative \
-	checker.proto
-protoc -I=proto/common \
-	--proto_path=proto/syncerpb \
-	--go_out=proto/syncerpb \
+	evaluator.proto
+protoc -I=pkg/proto \
+	--proto_path=pkg/proto \
+	--go_out=pkg/proto \
 	--go_opt=paths=source_relative  \
-	--go-grpc_out=proto/syncerpb \
+	--go-grpc_out=pkg/proto \
 	--go-grpc_opt=paths=source_relative \
-	syncer.proto
+	administrator.proto
