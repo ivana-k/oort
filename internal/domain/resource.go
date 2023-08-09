@@ -6,11 +6,6 @@ var (
 	RootResource = Resource{resourceId{"", "root"}, nil}
 )
 
-const (
-	AggregateRelationship   = "Aggregation"
-	CompositionRelationship = "Composition"
-)
-
 type resourceId struct {
 	id   string
 	kind string

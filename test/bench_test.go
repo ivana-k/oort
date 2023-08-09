@@ -4,8 +4,8 @@ package test
 //import (
 //	"fmt"
 //	"github.com/c12s/oort/domain/repos/acl"
-//	"github.com/c12s/oort/internal/domain"
-//	acl2 "github.com/c12s/oort/internal/domain/repos/rhabac"
+//	"github.com/c12s/oort/cmd/domain"
+//	acl2 "github.com/c12s/oort/cmd/domain/repos/rhabac"
 //	"testing"
 //)
 //

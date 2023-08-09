@@ -18,7 +18,7 @@ func NewRHABACStore(manager *TransactionManager, factory CypherFactory) domain.R
 	}
 }
 
-func (store RHABACStore) CreateResource(req domain.CreateResourceReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) CreateResource(req domain.CreateResourceReq) domain.AdministrationResp {
 	cypher1, params1 := store.factory.createResource(req)
 	idAttrId, err := domain.NewAttributeId("id")
 	if err != nil {
@@ -50,13 +50,13 @@ func (store RHABACStore) CreateResource(req domain.CreateResourceReq, generator 
 	cypher3, params3 := store.factory.putAttribute(kindAttrReq)
 	cyphers := []string{cypher1, cypher2, cypher3}
 	params := []map[string]interface{}{params1, params2, params3}
-	err = store.manager.WriteTransactions(cyphers, params, generator)
+	err = store.manager.WriteTransactions(cyphers, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteResource(req domain.DeleteResourceReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) DeleteResource(req domain.DeleteResourceReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteResource(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
@@ -78,41 +78,41 @@ func (store RHABACStore) GetResource(req domain.GetResourceReq) domain.GetResour
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) PutAttribute(req domain.PutAttributeReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) PutAttribute(req domain.PutAttributeReq) domain.AdministrationResp {
 	cypher, params := store.factory.putAttribute(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteAttribute(req domain.DeleteAttributeReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) DeleteAttribute(req domain.DeleteAttributeReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteAttribute(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) CreateInheritanceRel(req domain.CreateInheritanceRelReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) CreateInheritanceRel(req domain.CreateInheritanceRelReq) domain.AdministrationResp {
 	cypher, params := store.factory.createInheritanceRel(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteInheritanceRel(req domain.DeleteInheritanceRelReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) DeleteInheritanceRel(req domain.DeleteInheritanceRelReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteInheritanceRel(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) CreatePolicy(req domain.CreatePolicyReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) CreatePolicy(req domain.CreatePolicyReq) domain.AdministrationResp {
 	cypher, params := store.factory.createPolicy(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeletePolicy(req domain.DeletePolicyReq, generator domain.OutboxMsgGenerator) domain.AdministrationResp {
+func (store RHABACStore) DeletePolicy(req domain.DeletePolicyReq) domain.AdministrationResp {
 	cypher, params := store.factory.deletePolicy(req)
-	err := store.manager.WriteTransaction(cypher, params, generator)
+	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 

@@ -1,7 +1,7 @@
 package startup
 
 import (
-	"github.com/c12s/oort/pkg/proto"
+	"github.com/c12s/oort/pkg/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -11,15 +11,15 @@ import (
 	"syscall"
 )
 
-func startServer(address string, administrator proto.OortAdministratorServer, evaluator proto.OortEvaluatorServer) (chan bool, error) {
+func startServer(address string, administrator api.OortAdministratorServer, evaluator api.OortEvaluatorServer) (chan bool, error) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
 	s := grpc.NewServer()
-	proto.RegisterOortAdministratorServer(s, administrator)
-	proto.RegisterOortEvaluatorServer(s, evaluator)
+	api.RegisterOortAdministratorServer(s, administrator)
+	api.RegisterOortEvaluatorServer(s, evaluator)
 	reflection.Register(s)
 
 	go func() {

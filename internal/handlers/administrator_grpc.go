@@ -2,89 +2,90 @@ package handlers
 
 import (
 	"context"
+	"github.com/c12s/oort/internal/mappers/proto"
 	"github.com/c12s/oort/internal/services"
-	"github.com/c12s/oort/pkg/proto"
+	"github.com/c12s/oort/pkg/api"
 )
 
 type oortAdministratorGrpcServer struct {
-	proto.UnimplementedOortAdministratorServer
+	api.UnimplementedOortAdministratorServer
 	service services.AdministrationService
 }
 
-func NewOortAdministratorGrpcServer(service services.AdministrationService) (proto.OortAdministratorServer, error) {
+func NewOortAdministratorGrpcServer(service services.AdministrationService) (api.OortAdministratorServer, error) {
 	return &oortAdministratorGrpcServer{
 		service: service,
 	}, nil
 }
 
-func (o *oortAdministratorGrpcServer) CreateResource(ctx context.Context, req *proto.CreateResourceReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) CreateResource(ctx context.Context, req *api.CreateResourceReq) (*api.AdministrationResp, error) {
+	request, err := proto.CreateResourceReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.CreateResource(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) DeleteResource(ctx context.Context, req *proto.DeleteResourceReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) DeleteResource(ctx context.Context, req *api.DeleteResourceReq) (*api.AdministrationResp, error) {
+	request, err := proto.DeleteResourceReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.DeleteResource(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) CreateInheritanceRel(ctx context.Context, req *proto.CreateInheritanceRelReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) CreateInheritanceRel(ctx context.Context, req *api.CreateInheritanceRelReq) (*api.AdministrationResp, error) {
+	request, err := proto.CreateInheritanceRelReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.CreateInheritanceRel(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) DeleteInheritanceRel(ctx context.Context, req *proto.DeleteInheritanceRelReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) DeleteInheritanceRel(ctx context.Context, req *api.DeleteInheritanceRelReq) (*api.AdministrationResp, error) {
+	request, err := proto.DeleteInheritanceRelReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.DeleteInheritanceRel(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) PutAttribute(ctx context.Context, req *proto.PutAttributeReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) PutAttribute(ctx context.Context, req *api.PutAttributeReq) (*api.AdministrationResp, error) {
+	request, err := proto.PutAttributeReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.PutAttribute(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) DeleteAttribute(ctx context.Context, req *proto.DeleteAttributeReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) DeleteAttribute(ctx context.Context, req *api.DeleteAttributeReq) (*api.AdministrationResp, error) {
+	request, err := proto.DeleteAttributeReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.DeleteAttribute(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) CreatePolicy(ctx context.Context, req *proto.CreatePolicyReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) CreatePolicy(ctx context.Context, req *api.CreatePolicyReq) (*api.AdministrationResp, error) {
+	request, err := proto.CreatePolicyReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.CreatePolicy(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }
 
-func (o *oortAdministratorGrpcServer) DeletePolicy(ctx context.Context, req *proto.DeletePolicyReq) (*proto.AdministrationResp, error) {
-	request, err := req.ToDomain()
+func (o *oortAdministratorGrpcServer) DeletePolicy(ctx context.Context, req *api.DeletePolicyReq) (*api.AdministrationResp, error) {
+	request, err := proto.DeletePolicyReqToDomain(req)
 	if err != nil {
 		return nil, err
 	}
 	resp := o.service.DeletePolicy(*request)
-	return &proto.AdministrationResp{}, resp.Error
+	return &api.AdministrationResp{}, resp.Error
 }

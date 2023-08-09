@@ -2,12 +2,12 @@ package startup
 
 import (
 	"fmt"
+	"github.com/c12s/magnetar/pkg/messaging/nats"
 	"github.com/c12s/oort/internal/configs"
 	"github.com/c12s/oort/internal/handlers"
-	"github.com/c12s/oort/internal/messaging/nats"
 	"github.com/c12s/oort/internal/repos/rhabac/neo4j"
 	"github.com/c12s/oort/internal/services"
-	"github.com/c12s/oort/pkg/proto"
+	"github.com/c12s/oort/pkg/api"
 )
 
 func StartApp(config configs.Config) error {
@@ -20,14 +20,6 @@ func StartApp(config configs.Config) error {
 	defer manager.Stop()
 
 	neo4jRhabacStore := neo4j.NewRHABACStore(manager, neo4j.NewSimpleCypherFactory())
-	//c, err := gocache.NewGoCache(
-	//	cfg.Redis().Address(),
-	//	cfg.Redis().Eviction(),
-	//)
-	//if err != nil {
-	//	return err
-	//}
-	//defer c.Stop()
 
 	evaluationService, err := services.NewEvaluationService(neo4jRhabacStore)
 	if err != nil {
@@ -52,16 +44,18 @@ func StartApp(config configs.Config) error {
 		return err
 	}
 	defer natsConn.Close()
-	subscriber, err := nats.NewSubscriber(natsConn)
+	adminReqSubscriber, err := nats.NewSubscriber(natsConn, api.AdministrationReqSubject, "oort")
+	if err != nil {
+		return err
+	}
+	adminRespPublisher, err := nats.NewPublisher(natsConn)
 	if err != nil {
 		return err
 	}
 
-	err = handlers.NewAdministrationNatsHandler(
-		subscriber,
-		"sync",
-		"oort",
-		proto.NewAdministrationReqMarshaller(),
+	err = handlers.NewAsyncAdministratorHandler(
+		adminReqSubscriber,
+		adminRespPublisher,
 		*administrationService,
 	)
 	if err != nil {

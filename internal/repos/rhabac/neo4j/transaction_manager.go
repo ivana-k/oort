@@ -1,7 +1,6 @@
 package neo4j
 
 import (
-	"github.com/c12s/oort/internal/domain"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"log"
 )
@@ -24,22 +23,12 @@ func NewTransactionManager(uri, dbName string) (*TransactionManager, error) {
 
 type TransactionFunction func(transaction neo4j.Transaction) (interface{}, error)
 
-func (manager *TransactionManager) WriteTransaction(cypher string, params map[string]interface{}, generator domain.OutboxMsgGenerator) error {
+func (manager *TransactionManager) WriteTransaction(cypher string, params map[string]interface{}) error {
 	_, err := manager.writeTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		result, err := transaction.Run(cypher, params)
 		if err != nil {
 			_ = transaction.Rollback()
 		}
-		// todo: otkomentarisi ovo kasnije
-		//if callback == nil {
-		//	return nil, nil
-		//}
-		//outboxMessage := callback(err)
-		//_, err = transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
-		//if err != nil {
-		//	_ = transaction.Rollback()
-		//	return nil, errors.New("outbox message could not be stored - " + err.Error())
-		//}
 		if result == nil {
 			return nil, nil
 		}
@@ -48,7 +37,7 @@ func (manager *TransactionManager) WriteTransaction(cypher string, params map[st
 	return err
 }
 
-func (manager *TransactionManager) WriteTransactions(cyphers []string, params []map[string]interface{}, generator domain.OutboxMsgGenerator) error {
+func (manager *TransactionManager) WriteTransactions(cyphers []string, params []map[string]interface{}) error {
 	_, err := manager.writeTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		var txErr error = nil
 		for i := range cyphers {
@@ -65,15 +54,6 @@ func (manager *TransactionManager) WriteTransactions(cyphers []string, params []
 				break
 			}
 		}
-		//if callback == nil {
-		//	return nil, nil
-		//}
-		//outboxMessage := callback(txErr)
-		//result, err := transaction.Run(manager.getOutboxMessageCypher(outboxMessage))
-		//if err != nil || result.Err() != nil {
-		//	_ = transaction.Rollback()
-		//	return nil, errors.New("outbox message could not be stored - " + err.Error())
-		//}
 		return txErr, nil
 	})
 	return err
@@ -136,10 +116,3 @@ func (manager *TransactionManager) Stop() {
 		log.Println("error while closing neo4j conn: ", err)
 	}
 }
-
-//func (manager *TransactionManager) getOutboxMessageCypher(message model.OutboxMessage) (string, map[string]interface{}) {
-//	return "CREATE (:OutboxMessage{kind: $kind, payload: $payload, processing: $processing})",
-//		map[string]interface{}{"kind": message.Kind,
-//			"payload":    message.Payload,
-//			"processing": false}
-//}

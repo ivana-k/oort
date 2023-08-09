@@ -1,8 +1,8 @@
 package test
 
 //import (
-//	"github.com/c12s/oort/internal/domain/repos/acl"
-//	neo4jstore "github.com/c12s/oort/internal/repos/rhabac/neo4j"
+//	"github.com/c12s/oort/cmd/domain/repos/acl"
+//	neo4jstore "github.com/c12s/oort/cmd/repos/rhabac/neo4j"
 //)
 //
 //var (

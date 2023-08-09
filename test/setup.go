@@ -4,8 +4,8 @@ package test
 //import (
 //	"context"
 //	"fmt"
-//	"github.com/c12s/oort/internal/domain/repos/acl"
-//	"github.com/c12s/oort/internal/repos/rhabac/neo4j"
+//	"github.com/c12s/oort/cmd/domain/repos/acl"
+//	"github.com/c12s/oort/cmd/repos/rhabac/neo4j"
 //	neo4jstore "github.com/c12s/oort/repos/rhabac/neo4j"
 //	"github.com/testcontainers/testcontainers-go"
 //	"github.com/testcontainers/testcontainers-go/wait"
