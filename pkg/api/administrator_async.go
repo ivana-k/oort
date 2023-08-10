@@ -1,27 +1,38 @@
 package api
 
 import (
-	"errors"
+	"fmt"
 	"github.com/c12s/magnetar/pkg/messaging"
+	"github.com/c12s/magnetar/pkg/messaging/nats"
+	natsgo "github.com/nats-io/nats.go"
 	"log"
 )
 
-type AsyncAdministratorClient struct {
+type AdministrationAsyncClient struct {
 	publisher         messaging.Publisher
 	subscriberFactory func(subject string) messaging.Subscriber
 }
 
-func NewAsyncAdministratorClient(publisher messaging.Publisher, subscriberFactory func(subject string) messaging.Subscriber) (*AsyncAdministratorClient, error) {
-	if publisher == nil {
-		return nil, errors.New("publisher is nil")
+func NewAdministrationAsyncClient(natsAddress string) (*AdministrationAsyncClient, error) {
+	conn, err := natsgo.Connect(fmt.Sprintf("nats://%s", natsAddress))
+	if err != nil {
+		return nil, err
 	}
-	return &AsyncAdministratorClient{
+	publisher, err := nats.NewPublisher(conn)
+	if err != nil {
+		return nil, err
+	}
+	subscriberFactory := func(subject string) messaging.Subscriber {
+		subscriber, _ := nats.NewSubscriber(conn, subject, "")
+		return subscriber
+	}
+	return &AdministrationAsyncClient{
 		publisher:         publisher,
 		subscriberFactory: subscriberFactory,
 	}, nil
 }
 
-func (n *AsyncAdministratorClient) SendRequest(req AdministrationReq, callback AdministrationCallback) error {
+func (n *AdministrationAsyncClient) SendRequest(req AdministrationReq, callback AdministrationCallback) error {
 	reqMarshalled, err := req.Marshal()
 	if err != nil {
 		return err

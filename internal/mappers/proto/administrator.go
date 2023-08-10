@@ -126,7 +126,11 @@ func DeletePolicyReqToDomain(req *api.DeletePolicyReq) (*domain.DeletePolicyReq,
 }
 
 func AdministrationAsyncRespFromDomain(resp domain.AdministrationResp) (*api.AdministrationAsyncResp, error) {
+	err := ""
+	if resp.Error != nil {
+		err = resp.Error.Error()
+	}
 	return &api.AdministrationAsyncResp{
-		Error: resp.Error.Error(),
+		Error: err,
 	}, nil
 }

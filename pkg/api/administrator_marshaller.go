@@ -6,7 +6,7 @@ import (
 
 type AdministrationReq interface {
 	Marshal() ([]byte, error)
-	Unmarshal() error
+	Unmarshal([]byte) error
 	Kind() AdministrationAsyncReq_ReqKind
 }
 
