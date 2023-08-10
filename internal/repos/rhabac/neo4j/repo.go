@@ -6,19 +6,19 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
-type RHABACStore struct {
+type RHABACRepo struct {
 	manager *TransactionManager
 	factory CypherFactory
 }
 
-func NewRHABACStore(manager *TransactionManager, factory CypherFactory) domain.RHABACStore {
-	return RHABACStore{
+func NewRHABACRepo(manager *TransactionManager, factory CypherFactory) domain.RHABACRepo {
+	return RHABACRepo{
 		manager: manager,
 		factory: factory,
 	}
 }
 
-func (store RHABACStore) CreateResource(req domain.CreateResourceReq) domain.AdministrationResp {
+func (store RHABACRepo) CreateResource(req domain.CreateResourceReq) domain.AdministrationResp {
 	cypher1, params1 := store.factory.createResource(req)
 	idAttrId, err := domain.NewAttributeId("id")
 	if err != nil {
@@ -54,13 +54,13 @@ func (store RHABACStore) CreateResource(req domain.CreateResourceReq) domain.Adm
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteResource(req domain.DeleteResourceReq) domain.AdministrationResp {
+func (store RHABACRepo) DeleteResource(req domain.DeleteResourceReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteResource(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) GetResource(req domain.GetResourceReq) domain.GetResourceResp {
+func (store RHABACRepo) GetResource(req domain.GetResourceReq) domain.GetResourceResp {
 	cypher, params := store.factory.getResource(req)
 	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {
@@ -78,45 +78,45 @@ func (store RHABACStore) GetResource(req domain.GetResourceReq) domain.GetResour
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) PutAttribute(req domain.PutAttributeReq) domain.AdministrationResp {
+func (store RHABACRepo) PutAttribute(req domain.PutAttributeReq) domain.AdministrationResp {
 	cypher, params := store.factory.putAttribute(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteAttribute(req domain.DeleteAttributeReq) domain.AdministrationResp {
+func (store RHABACRepo) DeleteAttribute(req domain.DeleteAttributeReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteAttribute(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) CreateInheritanceRel(req domain.CreateInheritanceRelReq) domain.AdministrationResp {
+func (store RHABACRepo) CreateInheritanceRel(req domain.CreateInheritanceRelReq) domain.AdministrationResp {
 	cypher, params := store.factory.createInheritanceRel(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeleteInheritanceRel(req domain.DeleteInheritanceRelReq) domain.AdministrationResp {
+func (store RHABACRepo) DeleteInheritanceRel(req domain.DeleteInheritanceRelReq) domain.AdministrationResp {
 	cypher, params := store.factory.deleteInheritanceRel(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
 // todo: if the resource is being created, assign default attrs to it
-func (store RHABACStore) CreatePolicy(req domain.CreatePolicyReq) domain.AdministrationResp {
+func (store RHABACRepo) CreatePolicy(req domain.CreatePolicyReq) domain.AdministrationResp {
 	cypher, params := store.factory.createPolicy(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) DeletePolicy(req domain.DeletePolicyReq) domain.AdministrationResp {
+func (store RHABACRepo) DeletePolicy(req domain.DeletePolicyReq) domain.AdministrationResp {
 	cypher, params := store.factory.deletePolicy(req)
 	err := store.manager.WriteTransaction(cypher, params)
 	return domain.AdministrationResp{Error: err}
 }
 
-func (store RHABACStore) GetPermissionHierarchy(req domain.GetPermissionHierarchyReq) domain.GetPermissionHierarchyResp {
+func (store RHABACRepo) GetPermissionHierarchy(req domain.GetPermissionHierarchyReq) domain.GetPermissionHierarchyResp {
 	cypher, params := store.factory.getEffectivePermissionsWithPriority(req)
 	records, err := store.manager.ReadTransaction(cypher, params)
 	if err != nil {

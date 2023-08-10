@@ -1,6 +1,6 @@
 package domain
 
-type RHABACStore interface {
+type RHABACRepo interface {
 	CreateResource(req CreateResourceReq) AdministrationResp
 	DeleteResource(req DeleteResourceReq) AdministrationResp
 	GetResource(req GetResourceReq) GetResourceResp

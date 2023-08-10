@@ -5,17 +5,17 @@ import (
 )
 
 type EvaluationService struct {
-	store domain.RHABACStore
+	repo domain.RHABACRepo
 }
 
-func NewEvaluationService(store domain.RHABACStore) (*EvaluationService, error) {
+func NewEvaluationService(repo domain.RHABACRepo) (*EvaluationService, error) {
 	return &EvaluationService{
-		store: store,
+		repo: repo,
 	}, nil
 }
 
 func (h EvaluationService) Authorize(req domain.AuthorizationReq) domain.AuthorizationResp {
-	resp := h.store.GetPermissionHierarchy(domain.GetPermissionHierarchyReq{
+	resp := h.repo.GetPermissionHierarchy(domain.GetPermissionHierarchyReq{
 		Subject:        req.Subject,
 		Object:         req.Object,
 		PermissionName: req.PermissionName,
@@ -49,7 +49,7 @@ func (h EvaluationService) Authorize(req domain.AuthorizationReq) domain.Authori
 }
 
 func (h EvaluationService) getAttributes(resource domain.Resource) ([]domain.Attribute, error) {
-	res := h.store.GetResource(domain.GetResourceReq{Resource: resource})
+	res := h.repo.GetResource(domain.GetResourceReq{Resource: resource})
 	if res.Error != nil {
 		return nil, res.Error
 	}

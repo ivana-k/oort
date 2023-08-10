@@ -1,4 +1,4 @@
-package handlers
+package servers
 
 import (
 	"github.com/c12s/magnetar/pkg/messaging"
@@ -9,20 +9,25 @@ import (
 	"log"
 )
 
-type AsyncAdministratorHandler struct {
-	service   services.AdministrationService
-	publisher messaging.Publisher
+type AdministratorAsyncServer struct {
+	service    services.AdministrationService
+	publisher  messaging.Publisher
+	subscriber messaging.Subscriber
 }
 
-func NewAsyncAdministratorHandler(subscriber messaging.Subscriber, publisher messaging.Publisher, service services.AdministrationService) error {
-	s := AsyncAdministratorHandler{
-		service:   service,
-		publisher: publisher,
-	}
-	return subscriber.Subscribe(s.handle)
+func NewAdministratorAsyncServer(subscriber messaging.Subscriber, publisher messaging.Publisher, service services.AdministrationService) (*AdministratorAsyncServer, error) {
+	return &AdministratorAsyncServer{
+		service:    service,
+		publisher:  publisher,
+		subscriber: subscriber,
+	}, nil
 }
 
-func (s AsyncAdministratorHandler) handle(adminReqMarshalled []byte, replySubject string) {
+func (s *AdministratorAsyncServer) Serve() error {
+	return s.subscriber.Subscribe(s.serve)
+}
+
+func (s *AdministratorAsyncServer) serve(adminReqMarshalled []byte, replySubject string) {
 	adminReq := &api.AdministrationAsyncReq{}
 	err := adminReq.Unmarshal(adminReqMarshalled)
 	if err != nil {
@@ -150,6 +155,13 @@ func (s AsyncAdministratorHandler) handle(adminReqMarshalled []byte, replySubjec
 		return
 	}
 	err = s.publisher.Publish(respMarshalled, replySubject)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (s *AdministratorAsyncServer) GracefulStop() {
+	err := s.subscriber.Unsubscribe()
 	if err != nil {
 		log.Println(err)
 	}

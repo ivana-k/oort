@@ -5,37 +5,37 @@ import (
 )
 
 type AdministrationService struct {
-	store domain.RHABACStore
+	repo domain.RHABACRepo
 }
 
-func NewAdministrationService(store domain.RHABACStore) (*AdministrationService, error) {
+func NewAdministrationService(repo domain.RHABACRepo) (*AdministrationService, error) {
 	return &AdministrationService{
-		store: store,
+		repo: repo,
 	}, nil
 }
 
 func (h AdministrationService) CreateResource(req domain.CreateResourceReq) domain.AdministrationResp {
-	return h.store.CreateResource(req)
+	return h.repo.CreateResource(req)
 }
 
 func (h AdministrationService) DeleteResource(req domain.DeleteResourceReq) domain.AdministrationResp {
-	return h.store.DeleteResource(req)
+	return h.repo.DeleteResource(req)
 }
 
 func (h AdministrationService) PutAttribute(req domain.PutAttributeReq) domain.AdministrationResp {
-	return h.store.PutAttribute(req)
+	return h.repo.PutAttribute(req)
 }
 
 func (h AdministrationService) DeleteAttribute(req domain.DeleteAttributeReq) domain.AdministrationResp {
-	return h.store.DeleteAttribute(req)
+	return h.repo.DeleteAttribute(req)
 }
 
 func (h AdministrationService) CreateInheritanceRel(req domain.CreateInheritanceRelReq) domain.AdministrationResp {
-	return h.store.CreateInheritanceRel(req)
+	return h.repo.CreateInheritanceRel(req)
 }
 
 func (h AdministrationService) DeleteInheritanceRel(req domain.DeleteInheritanceRelReq) domain.AdministrationResp {
-	return h.store.DeleteInheritanceRel(req)
+	return h.repo.DeleteInheritanceRel(req)
 }
 
 func (h AdministrationService) CreatePolicy(req domain.CreatePolicyReq) domain.AdministrationResp {
@@ -45,7 +45,7 @@ func (h AdministrationService) CreatePolicy(req domain.CreatePolicyReq) domain.A
 	if req.ObjectScope.Name() == "" {
 		req.ObjectScope = domain.RootResource
 	}
-	return h.store.CreatePolicy(req)
+	return h.repo.CreatePolicy(req)
 }
 
 func (h AdministrationService) DeletePolicy(req domain.DeletePolicyReq) domain.AdministrationResp {
@@ -55,5 +55,5 @@ func (h AdministrationService) DeletePolicy(req domain.DeletePolicyReq) domain.A
 	if req.ObjectScope.Name() == "" {
 		req.ObjectScope = domain.RootResource
 	}
-	return h.store.DeletePolicy(req)
+	return h.repo.DeletePolicy(req)
 }
