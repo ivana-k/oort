@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option go_package = "github.com/c12s/oort/pkg/api";
+
+package proto;
+
+message AdministrationAsyncReq {
+  enum ReqKind {
+    CreateResource = 0;
+    DeleteResource = 1;
+    PutAttribute = 2;
+    DeleteAttribute = 3;
+    CreateInheritanceRel = 4;
+    DeleteInheritanceRel = 5;
+    CreatePolicy = 6;
+    DeletePolicy = 7;
+  }
+  ReqKind kind = 1;
+  bytes reqMarshalled = 2;
+}
+
+message AdministrationAsyncResp {
+  string error = 1;
+}

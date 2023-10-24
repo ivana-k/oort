@@ -3,7 +3,9 @@ version: "3.8"
 services:
 
   oort:
-    build: .
+    build:
+      context: ../
+      dockerfile: oort/Dockerfile
     image: oort
     container_name: oort
     hostname: ${OORT_HOSTNAME}
@@ -20,36 +22,11 @@ services:
       - NATS_PORT=${NATS_PORT}
       - NATS_USERNAME=${NATS_USERNAME}
       - NATS_PASSWORD=${NATS_PASSWORD}
-      - REDIS_HOSTNAME=${REDIS_HOSTNAME}
-      - REDIS_PORT=${REDIS_PORT}
-      - CACHE_EVICTION_MIN=${CACHE_EVICTION_MIN}
     networks:
       - network
     depends_on:
       - neo4j
       - nats
-      - redis
-
-  poller:
-    build: ./poller/
-    image: poller
-    container_name: poller
-    hostname: poller
-    restart: on-failure
-    environment:
-      - NEO4J_HOSTNAME=${NEO4J_HOSTNAME}
-      - NEO4J_BOLT_PORT=${NEO4J_BOLT_PORT}
-      - NEO4J_DBNAME=${NEO4J_DBNAME}
-      - NATS_HOSTNAME=${NATS_HOSTNAME}
-      - NATS_PORT=${NATS_PORT}
-      - NATS_USERNAME=${NATS_USERNAME}
-      - NATS_PASSWORD=${NATS_PASSWORD}
-      - POLL_INTERVAL_IN_MS=${POLL_INTERVAL_IN_MS}
-    depends_on:
-        - neo4j
-        - nats
-    networks:
-        - network
 
   neo4j:
     image: neo4j:4.4.12
@@ -75,26 +52,13 @@ services:
 
   nats:
     image: nats:latest
-    restart: on-failure
     container_name: nats
-    hostname: ${NATS_HOSTNAME}
     expose:
       - ${NATS_PORT}
-    environment:
-      - NATS_PORT=${NATS_PORT}
-      - NATS_USERNAME=${NATS_USERNAME}
-      - NATS_PASSWORD=${NATS_PASSWORD}
-    command: "-c /etc/nats/nats.conf"
-    volumes:
-        - ./nats.conf:/etc/nats/nats.conf:ro
-    networks:
-      - network
-
-  redis:
-    image: redis:6.2-alpine
+    ports:
+      - ${NATS_PORT}:${NATS_PORT}
+    hostname: ${NATS_HOSTNAME}
     restart: on-failure
-    container_name: redis
-    hostname: ${REDIS_HOSTNAME}
     networks:
       - network
 

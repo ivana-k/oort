@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+option go_package = "github.com/c12s/oort/pkg/api";
+
+package proto;
+
+import "model.proto";
+
+service OortAdministrator {
+  rpc CreateResource(CreateResourceReq) returns (AdministrationResp) {}
+  rpc DeleteResource(DeleteResourceReq) returns (AdministrationResp) {}
+  rpc CreateInheritanceRel(CreateInheritanceRelReq) returns (AdministrationResp) {}
+  rpc DeleteInheritanceRel(DeleteInheritanceRelReq) returns (AdministrationResp) {}
+  rpc PutAttribute(PutAttributeReq) returns (AdministrationResp) {}
+  rpc DeleteAttribute(DeleteAttributeReq) returns (AdministrationResp) {}
+  rpc CreatePolicy(CreatePolicyReq) returns (AdministrationResp) {}
+  rpc DeletePolicy(DeletePolicyReq) returns (AdministrationResp) {}
+}
+
+message CreateResourceReq {
+  Resource resource = 1;
+}
+
+message DeleteResourceReq {
+  Resource resource = 1;
+}
+
+message CreateInheritanceRelReq {
+  Resource from = 1;
+  Resource to = 2;
+}
+
+message DeleteInheritanceRelReq {
+  Resource from = 1;
+  Resource to = 2;
+}
+
+message PutAttributeReq {
+  Resource resource = 1;
+  Attribute attribute = 2;
+}
+
+message DeleteAttributeReq {
+  Resource resource = 1;
+  AttributeId attributeId = 2;
+}
+
+message CreatePolicyReq {
+  Resource subjectScope = 1;
+  Resource objectScope = 2;
+  Permission permission = 3;
+}
+
+message DeletePolicyReq {
+  Resource subjectScope = 1;
+  Resource objectScope = 2;
+  Permission permission = 3;
+}
+
+message AdministrationResp {
+}

@@ -1,14 +1,14 @@
 package test
 
-import (
-	"github.com/c12s/oort/domain/store/acl"
-	neo4jstore "github.com/c12s/oort/store/acl/neo4j"
-)
-
-var (
-	AclStore  acl.Store
-	TxManager *neo4jstore.TransactionManager
-)
+//import (
+//	"github.com/c12s/oort/cmd/domain/repos/acl"
+//	neo4jstore "github.com/c12s/oort/cmd/repos/rhabac/neo4j"
+//)
+//
+//var (
+//	AclStore  acl.Store
+//	TxManager *neo4jstore.TransactionManager
+//)
 
 //
 //func TestResourceConnections(t *testing.T) {
@@ -22,39 +22,39 @@ var (
 //		parent := org
 //		child := group
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Resource)
-//		assert.ErrorIs(t, parentStored.Error, acl.ErrNotFound)
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		assert.ErrorIs(t, parentStored.Error, rhabac.ErrNotFound)
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
 //		assert.Nil(t, childStored.Resource)
-//		assert.ErrorIs(t, childStored.Error, acl.ErrNotFound)
+//		assert.ErrorIs(t, childStored.Error, rhabac.ErrNotFound)
 //
 //		req := syncer.ConnectResourcesReq{
 //			ReqId:  "1",
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.ConnectResources(acl.ConnectResourcesReq{
+//		resp := aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		parentStored = aclStore.GetResource(acl.GetResourceReq{
+//		parentStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored = aclStore.GetResource(acl.GetResourceReq{
+//		childStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -67,40 +67,40 @@ var (
 //		parent := group
 //		child := user
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
 //		assert.Nil(t, childStored.Resource)
-//		assert.ErrorIs(t, childStored.Error, acl.ErrNotFound)
+//		assert.ErrorIs(t, childStored.Error, rhabac.ErrNotFound)
 //
 //		req := syncer.ConnectResourcesReq{
 //			ReqId:  "1",
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.ConnectResources(acl.ConnectResourcesReq{
+//		resp := aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		parentStored = aclStore.GetResource(acl.GetResourceReq{
+//		parentStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored = aclStore.GetResource(acl.GetResourceReq{
+//		childStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -113,14 +113,14 @@ var (
 //		parent := org
 //		child := user
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -133,21 +133,21 @@ var (
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.ConnectResources(acl.ConnectResourcesReq{
+//		resp := aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		parentStored = aclStore.GetResource(acl.GetResourceReq{
+//		parentStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored = aclStore.GetResource(acl.GetResourceReq{
+//		childStored = aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -161,14 +161,14 @@ var (
 //		parent := group
 //		child := user
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -181,28 +181,28 @@ var (
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.DisconnectResources(acl.DisconnectResourcesReq{
+//		resp := aclStore.DisconnectResources(rhabac.DisconnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		orgStored := aclStore.GetResource(acl.GetResourceReq{
+//		orgStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   org.Id(),
 //			Kind: org.Kind(),
 //		})
 //		assert.Nil(t, orgStored.Error)
 //		assert.Equal(t, org.Id(), orgStored.Resource.Id())
 //		assert.Equal(t, org.Kind(), orgStored.Resource.Kind())
-//		userStored := aclStore.GetResource(acl.GetResourceReq{
+//		userStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   user.Id(),
 //			Kind: user.Kind(),
 //		})
 //		assert.Nil(t, userStored.Error)
 //		assert.Equal(t, user.Id(), userStored.Resource.Id())
 //		assert.Equal(t, user.Kind(), userStored.Resource.Kind())
-//		groupStored := aclStore.GetResource(acl.GetResourceReq{
+//		groupStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   group.Id(),
 //			Kind: group.Kind(),
 //		})
@@ -216,14 +216,14 @@ var (
 //		parent := org
 //		child := user
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Error)
 //		assert.Equal(t, parent.Id(), parentStored.Resource.Id())
 //		assert.Equal(t, parent.Kind(), parentStored.Resource.Kind())
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
@@ -236,27 +236,27 @@ var (
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.DisconnectResources(acl.DisconnectResourcesReq{
+//		resp := aclStore.DisconnectResources(rhabac.DisconnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		orgStored := aclStore.GetResource(acl.GetResourceReq{
+//		orgStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   org.Id(),
 //			Kind: org.Kind(),
 //		})
 //		assert.Nil(t, orgStored.Error)
 //		assert.Equal(t, org.Id(), orgStored.Resource.Id())
 //		assert.Equal(t, org.Kind(), orgStored.Resource.Kind())
-//		userStored := aclStore.GetResource(acl.GetResourceReq{
+//		userStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   user.Id(),
 //			Kind: user.Kind(),
 //		})
 //		assert.Nil(t, userStored.Resource)
-//		assert.ErrorIs(t, userStored.Error, acl.ErrNotFound)
-//		groupStored := aclStore.GetResource(acl.GetResourceReq{
+//		assert.ErrorIs(t, userStored.Error, rhabac.ErrNotFound)
+//		groupStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   group.Id(),
 //			Kind: group.Kind(),
 //		})
@@ -283,25 +283,25 @@ var (
 //		child := user
 //		attribute := username
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   parent.Id(),
 //			Kind: parent.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Resource)
-//		assert.ErrorIs(t, parentStored.Error, acl.ErrNotFound)
-//		childStored := aclStore.GetResource(acl.GetResourceReq{
+//		assert.ErrorIs(t, parentStored.Error, rhabac.ErrNotFound)
+//		childStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   child.Id(),
 //			Kind: child.Kind(),
 //		})
 //		assert.Nil(t, childStored.Resource)
-//		assert.ErrorIs(t, childStored.Error, acl.ErrNotFound)
+//		assert.ErrorIs(t, childStored.Error, rhabac.ErrNotFound)
 //
 //		req := syncer.ConnectResourcesReq{
 //			ReqId:  "1",
 //			Parent: parent,
 //			Child:  child,
 //		}
-//		resp := aclStore.ConnectResources(acl.ConnectResourcesReq{
+//		resp := aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //			Parent:   req.Parent,
 //			Child:    req.Child,
 //			Callback: outboxMessageCallback(req),
@@ -313,14 +313,14 @@ var (
 //			Resource:  child,
 //			Attribute: attribute,
 //		}
-//		upsertResp := aclStore.UpsertAttribute(acl.UpsertAttributeReq{
+//		upsertResp := aclStore.UpsertAttribute(rhabac.UpsertAttributeReq{
 //			Resource:  upsertReq.Resource,
 //			Attribute: upsertReq.Attribute,
 //			Callback:  outboxMessageCallback(upsertReq),
 //		})
 //		assert.Nil(t, upsertResp.Error)
 //
-//		attrs := aclStore.GetAttributes(acl.GetAttributeReq{
+//		attrs := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: upsertReq.Resource,
 //		})
 //		assert.Nil(t, attrs.Error)
@@ -331,26 +331,26 @@ var (
 //		resource := group
 //		attribute := username
 //
-//		parentStored := aclStore.GetResource(acl.GetResourceReq{
+//		parentStored := aclStore.GetResource(rhabac.GetResourceReq{
 //			Id:   resource.Id(),
 //			Kind: resource.Kind(),
 //		})
 //		assert.Nil(t, parentStored.Resource)
-//		assert.ErrorIs(t, parentStored.Error, acl.ErrNotFound)
+//		assert.ErrorIs(t, parentStored.Error, rhabac.ErrNotFound)
 //
 //		upsertReq := syncer.UpsertAttributeReq{
 //			ReqId:     "2",
 //			Resource:  resource,
 //			Attribute: attribute,
 //		}
-//		upsertResp := aclStore.UpsertAttribute(acl.UpsertAttributeReq{
+//		upsertResp := aclStore.UpsertAttribute(rhabac.UpsertAttributeReq{
 //			Resource:  upsertReq.Resource,
 //			Attribute: upsertReq.Attribute,
 //			Callback:  outboxMessageCallback(upsertReq),
 //		})
 //		assert.Nil(t, upsertResp.Error)
 //
-//		attrs := aclStore.GetAttributes(acl.GetAttributeReq{
+//		attrs := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: upsertReq.Resource,
 //		})
 //		for _, attr := range attrs.Attributes {
@@ -363,7 +363,7 @@ var (
 //		attribute := username
 //		updatedAttribute := username2
 //
-//		oldAttrResp := aclStore.GetAttributes(acl.GetAttributeReq{
+//		oldAttrResp := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: resource,
 //		})
 //		assert.Nil(t, oldAttrResp.Error)
@@ -374,14 +374,14 @@ var (
 //			Resource:  resource,
 //			Attribute: updatedAttribute,
 //		}
-//		upsertResp := aclStore.UpsertAttribute(acl.UpsertAttributeReq{
+//		upsertResp := aclStore.UpsertAttribute(rhabac.UpsertAttributeReq{
 //			Resource:  upsertReq.Resource,
 //			Attribute: upsertReq.Attribute,
 //			Callback:  outboxMessageCallback(upsertReq),
 //		})
 //		assert.Nil(t, upsertResp.Error)
 //
-//		attrs := aclStore.GetAttributes(acl.GetAttributeReq{
+//		attrs := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: upsertReq.Resource,
 //		})
 //		assert.True(t, containsAttribute(attrs.Attributes, updatedAttribute))
@@ -393,7 +393,7 @@ var (
 //		attribute := username2
 //		updatedAttribute := username3
 //
-//		oldAttrResp := aclStore.GetAttributes(acl.GetAttributeReq{
+//		oldAttrResp := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: resource,
 //		})
 //		assert.Nil(t, oldAttrResp.Error)
@@ -404,14 +404,14 @@ var (
 //			Resource:  resource,
 //			Attribute: updatedAttribute,
 //		}
-//		upsertResp := aclStore.UpsertAttribute(acl.UpsertAttributeReq{
+//		upsertResp := aclStore.UpsertAttribute(rhabac.UpsertAttributeReq{
 //			Resource:  upsertReq.Resource,
 //			Attribute: upsertReq.Attribute,
 //			Callback:  outboxMessageCallback(upsertReq),
 //		})
 //		assert.Nil(t, upsertResp.Error)
 //
-//		attrs := aclStore.GetAttributes(acl.GetAttributeReq{
+//		attrs := aclStore.GetAttributes(rhabac.GetAttributeReq{
 //			Resource: upsertReq.Resource,
 //		})
 //		assert.True(t, containsAttribute(attrs.Attributes, updatedAttribute))
@@ -437,7 +437,7 @@ var (
 //		Parent: org,
 //		Child:  user,
 //	}
-//	resp := aclStore.ConnectResources(acl.ConnectResourcesReq{
+//	resp := aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //		Parent:   req.Parent,
 //		Child:    req.Child,
 //		Callback: outboxMessageCallback(req),
@@ -448,28 +448,28 @@ var (
 //		Parent: region,
 //		Child:  cluster,
 //	}
-//	resp = aclStore.ConnectResources(acl.ConnectResourcesReq{
+//	resp = aclStore.ConnectResources(rhabac.ConnectResourcesReq{
 //		Parent:   req.Parent,
 //		Child:    req.Child,
 //		Callback: outboxMessageCallback(req),
 //	})
 //	assert.Nil(t, resp.Error)
-//	resourceResp := aclStore.GetResource(acl.GetResourceReq{
+//	resourceResp := aclStore.GetResource(rhabac.GetResourceReq{
 //		Id:   org.Id(),
 //		Kind: org.Kind(),
 //	})
 //	assert.Equal(t, *resourceResp.Resource, org)
-//	resourceResp = aclStore.GetResource(acl.GetResourceReq{
+//	resourceResp = aclStore.GetResource(rhabac.GetResourceReq{
 //		Id:   user.Id(),
 //		Kind: user.Kind(),
 //	})
 //	assert.Equal(t, *resourceResp.Resource, user)
-//	resourceResp = aclStore.GetResource(acl.GetResourceReq{
+//	resourceResp = aclStore.GetResource(rhabac.GetResourceReq{
 //		Id:   region.Id(),
 //		Kind: region.Kind(),
 //	})
 //	assert.Equal(t, *resourceResp.Resource, region)
-//	resourceResp = aclStore.GetResource(acl.GetResourceReq{
+//	resourceResp = aclStore.GetResource(rhabac.GetResourceReq{
 //		Id:   cluster.Id(),
 //		Kind: cluster.Kind(),
 //	})
@@ -486,7 +486,7 @@ var (
 //			Resource:   resource,
 //			Permission: permission,
 //		}
-//		resp := aclStore.InsertPermission(acl.InsertPermissionReq{
+//		resp := aclStore.InsertPermission(rhabac.InsertPermissionReq{
 //			Principal:  req.Principal,
 //			Resource:   req.Resource,
 //			Permission: req.Permission,
@@ -494,7 +494,7 @@ var (
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		permissionsResp := aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp := aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      req.Principal,
 //			Resource:       req.Resource,
 //			PermissionName: req.Permission.Name(),
@@ -502,21 +502,21 @@ var (
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.True(t, containsPermission(permissionsResp.Hierarchy, permission))
 //		//newly created permission didn't affect any other principal-resource combinations
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      user,
 //			Resource:       region,
 //			PermissionName: req.Permission.Name(),
 //		})
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.False(t, containsPermission(permissionsResp.Hierarchy, permission))
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      org,
 //			Resource:       region,
 //			PermissionName: req.Permission.Name(),
 //		})
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.False(t, containsPermission(permissionsResp.Hierarchy, permission))
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      org,
 //			Resource:       cluster,
 //			PermissionName: req.Permission.Name(),
@@ -535,7 +535,7 @@ var (
 //			Resource:   resource,
 //			Permission: permission,
 //		}
-//		resp := aclStore.InsertPermission(acl.InsertPermissionReq{
+//		resp := aclStore.InsertPermission(rhabac.InsertPermissionReq{
 //			Principal:  req.Principal,
 //			Resource:   req.Resource,
 //			Permission: req.Permission,
@@ -543,7 +543,7 @@ var (
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		permissionsResp := aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp := aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      req.Principal,
 //			Resource:       req.Resource,
 //			PermissionName: req.Permission.Name(),
@@ -551,7 +551,7 @@ var (
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.True(t, containsPermission(permissionsResp.Hierarchy, permission))
 //		// user inherits permissions from org
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      user,
 //			Resource:       cluster,
 //			PermissionName: req.Permission.Name(),
@@ -559,14 +559,14 @@ var (
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.True(t, containsPermission(permissionsResp.Hierarchy, permission))
 //		// no inheritance
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      org,
 //			Resource:       region,
 //			PermissionName: req.Permission.Name(),
 //		})
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.False(t, containsPermission(permissionsResp.Hierarchy, permission))
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      user,
 //			Resource:       region,
 //			PermissionName: req.Permission.Name(),
@@ -585,7 +585,7 @@ var (
 //			Resource:   resource,
 //			Permission: permission,
 //		}
-//		resp := aclStore.InsertPermission(acl.InsertPermissionReq{
+//		resp := aclStore.InsertPermission(rhabac.InsertPermissionReq{
 //			Principal:  req.Principal,
 //			Resource:   req.Resource,
 //			Permission: req.Permission,
@@ -593,7 +593,7 @@ var (
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		permissionsResp := aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp := aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      req.Principal,
 //			Resource:       req.Resource,
 //			PermissionName: req.Permission.Name(),
@@ -601,7 +601,7 @@ var (
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.True(t, containsPermission(permissionsResp.Hierarchy, permission))
 //		// region-scoped permission -> cluster-scoped permission
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      user,
 //			Resource:       cluster,
 //			PermissionName: req.Permission.Name(),
@@ -609,14 +609,14 @@ var (
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.True(t, containsPermission(permissionsResp.Hierarchy, permission))
 //		// no inheritance
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      org,
 //			Resource:       region,
 //			PermissionName: req.Permission.Name(),
 //		})
 //		assert.Nil(t, permissionsResp.Error)
 //		assert.False(t, containsPermission(permissionsResp.Hierarchy, permission))
-//		permissionsResp = aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp = aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      org,
 //			Resource:       cluster,
 //			PermissionName: req.Permission.Name(),
@@ -635,7 +635,7 @@ var (
 //			Resource:   resource,
 //			Permission: permission,
 //		}
-//		resp := aclStore.RemovePermission(acl.RemovePermissionReq{
+//		resp := aclStore.RemovePermission(rhabac.RemovePermissionReq{
 //			Principal:  req.Principal,
 //			Resource:   req.Resource,
 //			Permission: req.Permission,
@@ -643,7 +643,7 @@ var (
 //		})
 //		assert.Nil(t, resp.Error)
 //
-//		permissionsResp := aclStore.GetPermissionByPrecedence(acl.GetPermissionReq{
+//		permissionsResp := aclStore.GetPermissionByPrecedence(rhabac.GetPermissionReq{
 //			Principal:      req.Principal,
 //			Resource:       req.Resource,
 //			PermissionName: req.Permission.Name(),
