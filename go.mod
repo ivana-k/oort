@@ -1,4 +1,4 @@
-module github.com/c12s/oort
+module github.com/ivana-k/oort
 
 go 1.17
 
