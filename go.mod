@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
-	github.com/c12s/magnetar v1.0.0
+	github.com/c12s/magnetar v0.0.0-20231024133825-b7ce392ad05c
 	github.com/golang/protobuf v1.5.3
 	github.com/nats-io/nats.go v1.28.0
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.1
