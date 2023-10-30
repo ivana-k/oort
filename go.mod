@@ -1,4 +1,4 @@
-module github.com/ivana-k/oort
+module github.com/ivana-k/error
 
 go 1.17
 
